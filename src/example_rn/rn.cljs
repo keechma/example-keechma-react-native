@@ -45,3 +45,4 @@
 (def animated-event (oget ReactNative "Animated.event"))
 
 (def AppState (oget ReactNative "AppState"))
+(def hairline-width (oget stylesheet "hairlineWidth"))

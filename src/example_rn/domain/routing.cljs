@@ -8,6 +8,9 @@
 
 (def pages (keys page-transitions))
 
+(def pages-with-navbar
+  [:init :about])
+
 (defn determine-route [route app-db]
   (let [key (get-in route [:data :key])
         index (get-in route [:data :index])]
