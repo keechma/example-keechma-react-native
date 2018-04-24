@@ -12,8 +12,9 @@
             [keechma.toolbox.ui :refer [sub>]]))
 
 (def page-titles
-  {:init "Home"
-   :about "About"})
+  {:init    "Home"
+   :about   "About"
+   :stories "Stories"})
 
 (defn calc-marker-width []
   (let [{:keys [width]} (dimensions)]

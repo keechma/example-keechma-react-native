@@ -115,7 +115,7 @@
                   next-app-db (assoc-in app-db
                                         (a/app-db-animation-path id version)
                                         {:data next-data :meta init-meta})]
-              (if (= state :banyan.tasks/running)
+              (if (= state :keechma.toolbox.tasks/running)
                 (t/stop-task next-app-db task-id)
                 next-app-db))
             (let [next-data (start-animation-values config animated start-end)

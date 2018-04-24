@@ -79,5 +79,4 @@
                                         (get-in app-db [:kv :route-transition :routes :prev])
                                         (pp/commit! (render-animation-end app-db :navbar-marker/position nil value))
                                         (get-in app-db [:kv :route-transition :routes :current])
-                                        (rna/blocking-animate-state! app-db :navbar-marker/position nil value)
-                                        )}))
+                                        (rna/blocking-animate-state! app-db :navbar-marker/position nil value))}))

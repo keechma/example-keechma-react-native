@@ -1,15 +1,16 @@
 (ns example-rn.domain.routing)
 
 (def page-transitions
-  {:loader :loader
-   :init   :slide
-   :about  :slide
-   :login  :popup})
+  {:loader  :loader
+   :init    :slide
+   :about   :slide
+   :stories :slide
+   :login   :popup})
 
 (def pages (keys page-transitions))
 
 (def pages-with-navbar
-  [:init :about])
+  [:init :about :stories])
 
 (defn determine-route [route app-db]
   (let [key (get-in route [:data :key])

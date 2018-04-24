@@ -52,22 +52,24 @@
              :navbar/translate-y navbar-height})))
 
 (defn render [ctx]
-  (let [{:keys [width]} (dimensions)
+  (let [{:keys [width height]} (dimensions)
         navbar-animation (:data (sub> ctx :animation :navbar))]
     [view {:style {:flex 1
                    :position "relative"
                    :background-color "white"}}
      [animated-view
       {:style (merge
-               {}
+               {:height height}
                (process-transform-styles (select-keys-by-namespace navbar-animation :router)))}
       [(ui/component ctx :router)]]
      [animated-view
-      {:style (merge
-               {:bottom 0
-                :width width
-                :position "absolute"}
-               (process-transform-styles (select-keys-by-namespace navbar-animation :navbar)))}
+      {:style (process-transform-styles
+               (merge
+                {:bottom 0
+                 :width width
+                 :position "absolute"
+                 :translate-y navbar-height}
+                (select-keys-by-namespace navbar-animation :navbar)))}
       [(ui/component ctx :navbar)]]]))
 
 (def component
