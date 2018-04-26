@@ -1,11 +1,12 @@
 (ns example-rn.domain.routing)
 
 (def page-transitions
-  {:loader  :loader
-   :init    :slide
-   :about   :slide
-   :stories :slide
-   :login   :popup})
+  {:loader           :loader
+   :init             :slide
+   :about            :slide
+   :stories          :slide
+   :login            :popup
+   :taxi-select-type :popup})
 
 (def pages (keys page-transitions))
 

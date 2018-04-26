@@ -17,7 +17,9 @@
      [button {:on-press #(navigate-go! {:key :about})
               :title "Go to About Page"}]
      [button {:on-press #(navigate-go! {:key :login})
-              :title "Open Login Popup"}]]))
+              :title "Open Login Popup"}]
+     [button {:on-press #(navigate-go! {:key :taxi-select-type})
+              :title "Open Taxi Select Type Page"}]]))
 
 (def component
   (ui/constructor {:renderer render}))

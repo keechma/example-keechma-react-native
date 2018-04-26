@@ -43,6 +43,7 @@
 
 (def AnimatedValue (oget ReactNative "Animated.Value"))
 (def animated-event (oget ReactNative "Animated.event"))
+(def PanResponder (oget ReactNative "PanResponder"))
 
 (def AppState (oget ReactNative "AppState"))
 (def hairline-width (oget stylesheet "hairlineWidth"))

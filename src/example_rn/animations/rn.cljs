@@ -1,12 +1,29 @@
 (ns example-rn.animations.rn
-  (:require [example-rn.rn :refer [animated easing]]
+  (:require [example-rn.rn :refer [animated easing PanResponder]]
             [oops.core :refer [ocall+ ocall oget oapply+]]
-            [cljs.core.async :refer [put!]]
+            [cljs.core.async :refer [put! chan pipe close!]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.helpers :as helpers]
             [keechma.toolbox.tasks :as t]))
 
 (def AnimatedValue (oget animated "Value"))
+
+(defmulti pan-start-values a/dispatcher)
+(defmulti pan-end-values a/dispatcher)
+(defmulti pan-value a/dispatcher)
+(defmulti pan-init-value a/dispatcher)
+
+(defmethod pan-start-values :default [meta]
+  {})
+
+(defmethod pan-end-values :default [meta]
+  {})
+
+(defmethod pan-value :default [meta]
+  0)
+
+(defmethod pan-init-value :default [meta]
+  0)
 
 (defn get-from-value [config]
   (or (:fromValue config) 0))
@@ -39,6 +56,40 @@
       (put! res-chan {:animated a-value :done? false :start! start :value start-value})
       (fn []
         {:animated a-value :done? true :value @value-atom}))))
+
+(defn make-panresponder-data-processor [done? terminated?]
+  (fn [gesture]
+    {:gesture (js->clj gesture :keywordize-keys true)
+     :done? done?
+     :terminated? terminated?}))
+
+(defn make-panresponder-producer [config]
+  (let [panresponder-chan (chan)
+
+        active-data-processor     (make-panresponder-data-processor false false)
+        done-data-processor       (make-panresponder-data-processor true false)
+        terminated-data-processor (make-panresponder-data-processor true true)
+
+        active-data-handler     #(put! panresponder-chan (active-data-processor %2))
+        done-data-handler       #(put! panresponder-chan (done-data-processor %2))
+        terminated-data-handler #(put! panresponder-chan (terminated-data-processor %2))
+
+        panresponder (ocall PanResponder "create"
+                            #js {:onStartShouldSetPanResponder        (constantly true)
+                                 :onStartShouldSetPanResponderCapture (constantly true)
+                                 :onMoveShouldSetPanResponder         (constantly true)
+                                 :onMoveShouldSetPanResponderCapture  (constantly true)
+                                 :onPanResponderTerminationRequest    (constantly true)
+                                 :onPanResponderGrant                 active-data-handler 
+                                 :onPanResponderMove                  active-data-handler 
+                                 :onPanResponderRelease               done-data-handler  
+                                 :onPanResponderTerminate             terminated-data-handler})]
+
+    (put! panresponder-chan {:gesture nil :done? false :terminated? false})
+    {:pan-handlers (js->clj (oget panresponder "panHandlers"))
+     :producer     (fn [res-chan _]
+                     (pipe panresponder-chan res-chan false)
+                     (fn [_] (close! panresponder-chan)))}))
 
 (def animatable-props
   #{:opacity
@@ -125,5 +176,59 @@
               (start!)
               next-app-db))))))))
 
+(defn assoc-next-pan-data [next-meta start-end done?]
+  (let [value (or (:pan-value next-meta) (:pan-init-value next-meta))]
+    (assoc next-meta
+           :data (helpers/get-current-styles value start-end done?))))
+
+(defn panresponder-animate-state!
+  ([task-runner! app-db identifier] (panresponder-animate-state! task-runner! app-db identifier nil nil))
+  ([task-runner! app-db identifier version] (panresponder-animate-state! task-runner! app-db identifier version nil))
+  ([task-runner! app-db identifier version args]
+   (let [[id state] (a/identifier->id-state identifier)
+         prev (a/get-animation app-db id version)
+         prev-values (:data prev)
+         prev-meta (assoc (:meta prev) :data prev-values)
+         init-meta (a/make-initial-meta identifier args prev-meta)
+         start-values (pan-start-values init-meta)
+         end-values (pan-end-values init-meta)
+         start-end (helpers/start-end-values (helpers/prepare-values start-values) (helpers/prepare-values end-values))
+         {:keys [producer pan-handlers]} (make-panresponder-producer nil)
+         task-id (a/animation-id id version)]
+     (task-runner!
+      producer task-id
+      (fn [{:keys [value state]} app-db]
+        (let [{:keys [done? terminated? gesture]} value
+              prev-meta (get-in app-db (concat (a/app-db-animation-path id version) [:meta]))
+              base-next-meta (assoc prev-meta
+                                    :pan-handlers pan-handlers
+                                    :gesture gesture)
+              next-meta (if (nil? gesture)
+                          (-> base-next-meta
+                              (assoc :pan-init-value (pan-init-value init-meta))
+                              (assoc-next-pan-data start-end done?))
+                          (-> base-next-meta
+                              (assoc :pan-value (pan-value base-next-meta))
+                              (assoc-next-pan-data start-end done?)))
+
+              next-data (:data next-meta)]
+
+          (if done?
+            (let [next-app-db (assoc-in app-db
+                                    (a/app-db-animation-path id version)
+                                    {:data next-data :meta (assoc init-meta :pan-value (:pan-value next-meta))})]
+              (if (= state :keechma.toolbox.tasks/running)
+                (t/stop-task next-app-db task-id)
+                next-app-db))
+            (assoc-in app-db
+                      (a/app-db-animation-path id version)
+                      {:data next-data
+                       :meta next-meta}))))))))
+
+
+
 (def blocking-animate-state! (partial animate-state! t/blocking-task!))
 (def non-blocking-animate-state! (partial animate-state! t/non-blocking-task!))
+
+(def blocking-panresponder-animate-state! (partial panresponder-animate-state! t/blocking-task!))
+(def non-blocking-panresponder-animate-state! (partial panresponder-animate-state! t/blocking-task!))

@@ -6,14 +6,16 @@
             [example-rn.components.login :as login]
             [example-rn.components.about :as about]
             [example-rn.components.navbar :as navbar]
-            [example-rn.components.stories :as stories]))
+            [example-rn.components.stories :as stories]
+            [example-rn.components.taxi-select-type :as taxi-select-type]))
 
 (def components
-  {:main    main/component
-   :router  router/component
-   :loader  loader/component
-   :init    init/component
-   :login   login/component
-   :about   about/component
-   :navbar  navbar/component
-   :stories stories/component})
+  {:main             main/component
+   :router           router/component
+   :loader           loader/component
+   :init             init/component
+   :login            login/component
+   :about            about/component
+   :navbar           navbar/component
+   :stories          stories/component
+   :taxi-select-type taxi-select-type/component})
