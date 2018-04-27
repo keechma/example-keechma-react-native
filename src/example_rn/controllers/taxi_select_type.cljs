@@ -5,7 +5,7 @@
             [oops.core :refer [ocall]]
             [promesa.core :as p]
             [keechma.toolbox.animations.core :as a :refer [render-animation-end]]
-            
+            [example-rn.util :refer [delay-pipeline]]
             [example-rn.animations.rn :as rna]))
 
 (defn decide-next-animation [app-db]
@@ -24,9 +24,17 @@
      (when (= :taxi-select-type (get-in route [:data :key]))
        true))
    {:on-start (pipeline! [value app-db]
-                (pp/commit! (render-animation-end app-db :taxi-select-type/init nil nil))
-                (pp/execute! :start-panresponder nil))
+                (pp/commit! (render-animation-end app-db :taxi-select-type/done nil nil))
+                (pp/execute! :start-panresponder nil)
+
+                )
+    :close (pipeline! [value app-db]
+             (a/cancel-animation! app-db :taxi-select-type/panmove)
+             (pp/commit! (render-animation-end app-db :taxi-select-type/done nil nil))
+             (rna/blocking-animate-state! app-db :taxi-select-type/init nil nil)
+             (pp/execute! :start-panresponder nil))
     :start-panresponder (pipeline! [value app-db]
                           (rna/blocking-panresponder-animate-state! app-db :taxi-select-type/panmove nil nil)
                           (rna/blocking-animate-state! app-db (decide-next-animation app-db) nil nil)
-                          (pp/execute! :start-panresponder nil))}))
+                          (pp/execute! :start-panresponder nil)
+                          )}))

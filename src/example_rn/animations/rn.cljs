@@ -72,6 +72,12 @@
      :done? done?
      :terminated? terminated?}))
 
+(defn on-move-should-set-pan-responder? [_ gesture]
+  (let [dx (.abs js/Math (oget gesture "dx"))
+        dy (.abs js/Math (oget gesture "dy"))]
+    (println dx dy)
+    (or (< 5 dx) (< 5 dy))))
+
 (defn make-panresponder-producer [config]
   (let [panresponder-chan (chan)
 
@@ -84,10 +90,10 @@
         terminated-data-handler #(put! panresponder-chan (terminated-data-processor %2))
 
         panresponder (ocall PanResponder "create"
-                            #js {:onStartShouldSetPanResponder        (constantly true)
-                                 :onStartShouldSetPanResponderCapture (constantly true)
-                                 :onMoveShouldSetPanResponder         (constantly true)
-                                 :onMoveShouldSetPanResponderCapture  (constantly true)
+                            #js {:onStartShouldSetPanResponder        (constantly false)
+                                 :onStartShouldSetPanResponderCapture (constantly false)
+                                 :onMoveShouldSetPanResponder         on-move-should-set-pan-responder?
+                                 :onMoveShouldSetPanResponderCapture  (constantly false)
                                  :onPanResponderTerminationRequest    (constantly true)
                                  :onPanResponderGrant                 active-data-handler 
                                  :onPanResponderMove                  active-data-handler 
@@ -98,7 +104,10 @@
     {:pan-handlers (js->clj (oget panresponder "panHandlers"))
      :producer     (fn [res-chan _]
                      (pipe panresponder-chan res-chan false)
-                     (fn [_] (close! panresponder-chan)))}))
+                     (fn [_]
+                       (close! panresponder-chan)
+                       ;;{:done? true}
+                       ))}))
 
 (def animatable-props
   #{:opacity
@@ -211,6 +220,7 @@
          init-meta (make-initial-meta identifier args prev-meta)
          init-value (pan-init-value init-meta)
          last-values (atom (pan-step init-meta init-value))
+         last-value (atom init-value)
          animated-values (make-animated-values @last-values)
          {:keys [producer pan-handlers]} (make-panresponder-producer nil)
          task-id (a/animation-id id version)]
@@ -218,7 +228,7 @@
       producer task-id
       (fn [{:keys [value state]} app-db]
         (let [{:keys [done? terminated? gesture]} value
-              init? (nil? gesture)
+              init? (and (not done?) (nil? gesture))
               next-meta (assoc init-meta
                                :pan-handlers pan-handlers
                                :pan-init-value init-value
@@ -226,22 +236,27 @@
                                :data @last-values)
               next-data animated-values
               next-value (pan-value next-meta)
-              next-values (pan-step next-meta next-value)]
-
-          (reset! last-values next-values)
-          (update-animated-values! animated-values next-values)
+              next-values (if (= next-value @last-value) @last-values (pan-step next-meta next-value))]
+          
+          (when (and (not= next-value @last-value))
+            (reset! last-values next-values)
+            (reset! last-value next-value)
+            (update-animated-values! animated-values next-values))
 
           (if done?
-            (let [next-app-db (assoc-in app-db
-                                    (a/app-db-animation-path id version)
-                                    {:data next-values
-                                     :meta (assoc init-meta
-                                                  :pan-init-value init-value
-                                                  :pan-value next-value
-                                                  :gesture gesture)})]
-              (if (= state :keechma.toolbox.tasks/running)
-                (t/stop-task next-app-db task-id)
-                next-app-db))
+            (do
+              (println "NEXT VALUES" next-values)
+              (let [next-app-db (assoc-in app-db
+                                          (a/app-db-animation-path id version)
+                                          {:data next-values
+                                           :meta (assoc init-meta
+                                                        :pan-handlers #js{}
+                                                        :pan-init-value init-value
+                                                        :pan-value next-value
+                                                        :gesture gesture)})]
+                (if (= state :keechma.toolbox.tasks/running)
+                  (t/stop-task next-app-db task-id)
+                  next-app-db)))
             (if init?
               (assoc-in app-db
                         (a/app-db-animation-path id version)
