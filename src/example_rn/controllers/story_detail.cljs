@@ -35,4 +35,6 @@
              (get-in app-db [:kv :open-story])
              (rna/blocking-animate-state! app-db :open-story/open nil value)
              (rna/blocking-animate-state! app-db :open-story/init nil value)
-             (pp/commit! (assoc-in app-db [:kv :open-story] nil)))}))
+             (pp/commit! (assoc-in app-db [:kv :open-story] nil)))
+    :on-stop (pipeline! [value app-db]
+               (pp/commit! (assoc-in app-db [:kv :open-story] nil)))}))

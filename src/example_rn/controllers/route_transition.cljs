@@ -21,7 +21,7 @@
       app-db)))
 
 (defn transition-routes [app-db]
-  (get-in app-db [:kv :router-transition :routes]))
+  (get-in app-db [:kv :route-transition :routes]))
 
 (defn animation-args [app-db]
   {:animation (decide-animation app-db)
@@ -60,7 +60,7 @@
                                   (pipeline! [value app-db]
                                     (pp/commit! (render-animation-init app-db))
                                     (rna/blocking-animate-state! app-db :router/slide nil (animation-args app-db))
-                                    (pp/commit! (assoc-in app-db [:kv :router-transition :routes :prev] nil)))))
+                                    (pp/commit! (assoc-in app-db [:kv :route-transition :routes :prev] nil)))))
     :animate-navbar-transition (pipeline! [value app-db]
                                  (determine-navbar-state app-db)
                                  (case value

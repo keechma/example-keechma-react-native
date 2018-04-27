@@ -8,22 +8,31 @@
 
 (def AnimatedValue (oget animated "Value"))
 
-(defmulti pan-start-values a/dispatcher)
-(defmulti pan-end-values a/dispatcher)
+(defn make-initial-meta
+  ([identifier] (make-initial-meta identifier nil nil))
+  ([identifier args] (make-initial-meta identifier args nil))
+  ([identifier args prev]
+   (let [[id state] (a/identifier->id-state identifier)]
+     {:id id
+      :state state
+      :identifier identifier
+      :position 0
+      :times-invoked 0
+      :prev (dissoc prev :prev)
+      :args args})))
+
 (defmulti pan-value a/dispatcher)
 (defmulti pan-init-value a/dispatcher)
+(defmulti pan-step a/dispatcher)
 
-(defmethod pan-start-values :default [meta]
-  {})
-
-(defmethod pan-end-values :default [meta]
+(defmethod pan-step :default [meta pan-value]
   {})
 
 (defmethod pan-value :default [meta]
-  0)
+  [0 0])
 
 (defmethod pan-init-value :default [meta]
-  0)
+  [0 0])
 
 (defn get-from-value [config]
   (or (:fromValue config) 0))
@@ -145,7 +154,7 @@
          prev (a/get-animation app-db id version)
          prev-values (:data prev)
          prev-meta (:meta prev)
-         init-meta (a/make-initial-meta identifier args prev-meta)
+         init-meta (make-initial-meta identifier args prev-meta)
          config (a/animator init-meta prev-values)
          values (a/values init-meta)
          start-end (helpers/start-end-values (prepare-values prev-values) (prepare-values values))
@@ -176,10 +185,20 @@
               (start!)
               next-app-db))))))))
 
-(defn assoc-next-pan-data [next-meta start-end done?]
-  (let [value (or (:pan-value next-meta) (:pan-init-value next-meta))]
-    (assoc next-meta
-           :data (helpers/get-current-styles value start-end done?))))
+(defn assoc-next-pan-data [next-meta]
+  (assoc next-meta :data (pan-step next-meta (:pan-value next-meta))))
+
+(defn make-animated-values [values]
+  (reduce-kv (fn [m k v]
+               (assoc m k (AnimatedValue. v)))
+             {} values))
+
+(defn update-animated-values! [animated-values next-values]
+  (reduce-kv (fn [m k v]
+               (let [current (or (get m k) (AnimatedValue. v))]
+                 (ocall current "setValue" v)
+                 (assoc m k current)))
+             animated-values next-values))
 
 (defn panresponder-animate-state!
   ([task-runner! app-db identifier] (panresponder-animate-state! task-runner! app-db identifier nil nil))
@@ -189,41 +208,46 @@
          prev (a/get-animation app-db id version)
          prev-values (:data prev)
          prev-meta (assoc (:meta prev) :data prev-values)
-         init-meta (a/make-initial-meta identifier args prev-meta)
-         start-values (pan-start-values init-meta)
-         end-values (pan-end-values init-meta)
-         start-end (helpers/start-end-values (helpers/prepare-values start-values) (helpers/prepare-values end-values))
+         init-meta (make-initial-meta identifier args prev-meta)
+         init-value (pan-init-value init-meta)
+         last-values (atom (pan-step init-meta init-value))
+         animated-values (make-animated-values @last-values)
          {:keys [producer pan-handlers]} (make-panresponder-producer nil)
          task-id (a/animation-id id version)]
      (task-runner!
       producer task-id
       (fn [{:keys [value state]} app-db]
         (let [{:keys [done? terminated? gesture]} value
-              prev-meta (get-in app-db (concat (a/app-db-animation-path id version) [:meta]))
-              base-next-meta (assoc prev-meta
-                                    :pan-handlers pan-handlers
-                                    :gesture gesture)
-              next-meta (if (nil? gesture)
-                          (-> base-next-meta
-                              (assoc :pan-init-value (pan-init-value init-meta))
-                              (assoc-next-pan-data start-end done?))
-                          (-> base-next-meta
-                              (assoc :pan-value (pan-value base-next-meta))
-                              (assoc-next-pan-data start-end done?)))
+              init? (nil? gesture)
+              next-meta (assoc init-meta
+                               :pan-handlers pan-handlers
+                               :pan-init-value init-value
+                               :gesture gesture
+                               :data @last-values)
+              next-data animated-values
+              next-value (pan-value next-meta)
+              next-values (pan-step next-meta next-value)]
 
-              next-data (:data next-meta)]
+          (reset! last-values next-values)
+          (update-animated-values! animated-values next-values)
 
           (if done?
             (let [next-app-db (assoc-in app-db
                                     (a/app-db-animation-path id version)
-                                    {:data next-data :meta (assoc init-meta :pan-value (:pan-value next-meta))})]
+                                    {:data next-values
+                                     :meta (assoc init-meta
+                                                  :pan-init-value init-value
+                                                  :pan-value next-value
+                                                  :gesture gesture)})]
               (if (= state :keechma.toolbox.tasks/running)
                 (t/stop-task next-app-db task-id)
                 next-app-db))
-            (assoc-in app-db
-                      (a/app-db-animation-path id version)
-                      {:data next-data
-                       :meta next-meta}))))))))
+            (if init?
+              (assoc-in app-db
+                        (a/app-db-animation-path id version)
+                        {:data next-data
+                         :meta next-meta})
+              app-db))))))))
 
 
 
