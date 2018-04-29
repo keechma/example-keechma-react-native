@@ -1,10 +1,11 @@
 (ns example-rn.animations.rn
   (:require [example-rn.rn :refer [animated easing PanResponder]]
             [oops.core :refer [ocall+ ocall oget oapply+]]
-            [cljs.core.async :refer [put! chan pipe close!]]
+            [cljs.core.async :refer [put! chan pipe close! <!]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.helpers :as helpers]
-            [keechma.toolbox.tasks :as t]))
+            [keechma.toolbox.tasks :as t])
+  (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (def AnimatedValue (oget animated "Value"))
 
@@ -75,12 +76,11 @@
 (defn on-move-should-set-pan-responder? [_ gesture]
   (let [dx (.abs js/Math (oget gesture "dx"))
         dy (.abs js/Math (oget gesture "dy"))]
-    (println dx dy)
     (or (< 5 dx) (< 5 dy))))
 
 (defn make-panresponder-producer [config]
   (let [panresponder-chan (chan)
-
+        panresponder-atom (atom nil)
         active-data-processor     (make-panresponder-data-processor false false)
         done-data-processor       (make-panresponder-data-processor true false)
         terminated-data-processor (make-panresponder-data-processor true true)
@@ -103,11 +103,18 @@
     (put! panresponder-chan {:gesture nil :done? false :terminated? false})
     {:pan-handlers (js->clj (oget panresponder "panHandlers"))
      :producer     (fn [res-chan _]
-                     (pipe panresponder-chan res-chan false)
+                     (go-loop []
+                       (let [value (<! panresponder-chan)]
+                         (when value
+                           (put! res-chan value)
+                           (reset! panresponder-atom value)
+                           (recur))))
+
                      (fn [_]
-                       (close! panresponder-chan)
-                       ;;{:done? true}
-                       ))}))
+                       (let [last-panresponder @panresponder-atom]
+                         (close! panresponder-chan)
+                         (when (not (:done? last-panresponder))
+                           (assoc last-panresponder :done? true)))))}))
 
 (def animatable-props
   #{:opacity
@@ -226,8 +233,9 @@
          task-id (a/animation-id id version)]
      (task-runner!
       producer task-id
-      (fn [{:keys [value state]} app-db]
-        (let [{:keys [done? terminated? gesture]} value
+      (fn [animation-state app-db]
+        (let [{:keys [value state]} animation-state
+              {:keys [done? terminated? gesture]} value
               init? (and (not done?) (nil? gesture))
               next-meta (assoc init-meta
                                :pan-handlers pan-handlers
@@ -235,7 +243,7 @@
                                :gesture gesture
                                :data @last-values)
               next-data animated-values
-              next-value (pan-value next-meta)
+              next-value (if gesture (pan-value next-meta) init-value)
               next-values (if (= next-value @last-value) @last-values (pan-step next-meta next-value))]
           
           (when (and (not= next-value @last-value))
@@ -245,12 +253,11 @@
 
           (if done?
             (do
-              (println "NEXT VALUES" next-values)
               (let [next-app-db (assoc-in app-db
                                           (a/app-db-animation-path id version)
                                           {:data next-values
                                            :meta (assoc init-meta
-                                                        :pan-handlers #js{}
+                                                        :pan-handlers {}
                                                         :pan-init-value init-value
                                                         :pan-value next-value
                                                         :gesture gesture)})]

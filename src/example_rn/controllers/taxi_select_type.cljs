@@ -24,13 +24,13 @@
      (when (= :taxi-select-type (get-in route [:data :key]))
        true))
    {:on-start (pipeline! [value app-db]
-                (pp/commit! (render-animation-end app-db :taxi-select-type/done nil nil))
-                (pp/execute! :start-panresponder nil)
-
-                )
+                (pp/commit! 
+                 (-> app-db
+                     (assoc-in [:kv :selected-vehicle] 1)
+                     (render-animation-end :taxi-select-type/init nil nil)))
+                (pp/execute! :start-panresponder nil))
     :close (pipeline! [value app-db]
-             (a/cancel-animation! app-db :taxi-select-type/panmove)
-             (pp/commit! (render-animation-end app-db :taxi-select-type/done nil nil))
+             (a/cancel-animation! app-db :taxi-select-type)
              (rna/blocking-animate-state! app-db :taxi-select-type/init nil nil)
              (pp/execute! :start-panresponder nil))
     :start-panresponder (pipeline! [value app-db]

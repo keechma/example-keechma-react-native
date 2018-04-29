@@ -7,6 +7,6 @@
   (pp-controller/constructor
    (constantly true)
    {:on-start (pipeline! [value app-db]
-                (delay-pipeline 1000)
+                ;;(delay-pipeline 1000)
                 (pp/commit! (assoc-in app-db [:kv :initialized?] true))
                 (pp/reroute!))}))
