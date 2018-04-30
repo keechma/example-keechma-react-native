@@ -26,3 +26,6 @@
        idx
        (recur (rest c) (inc idx)))
      nil)))
+
+(defn clamp [min-value max-value value]
+  (max min-value (min max-value value)))
