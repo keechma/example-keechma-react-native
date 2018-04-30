@@ -5,8 +5,7 @@
             [example-rn.domain.routing :refer [pages-with-navbar]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
-            [example-rn.util :refer [process-transform-styles]]
-            [keechma.toolbox.animations.helpers :refer [select-keys-by-namespace]]
+            [example-rn.util :refer [with-animation-styles]]
             [example-rn.util.dimensions :refer [dimensions]]
             [example-rn.util :refer [index-of]]
             [keechma.toolbox.ui :refer [sub>]]))
@@ -56,13 +55,13 @@
               [text {:style {:color "red"}} (get page-titles p)]]])
           pages-with-navbar)
      [animated-view {:style 
-            (process-transform-styles
-             (merge {:height 3
-                     :width (calc-marker-width)
-                     :translate-x (- (calc-marker-width))
-                     :background-color "#333"
-                     :position "absolute"}
-                    animation-data))}]]))
+                     (with-animation-styles
+                       {:height 3
+                        :width (calc-marker-width)
+                        :translate-x (- (calc-marker-width))
+                        :background-color "#333"
+                        :position "absolute"}
+                       animation-data)}]]))
 
 (def component
   (ui/constructor {:renderer render

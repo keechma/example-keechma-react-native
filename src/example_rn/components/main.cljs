@@ -54,27 +54,29 @@
 (defn render [ctx]
   (let [{:keys [width height]} (dimensions)
         navbar-animation (:data (sub> ctx :animation :navbar))]
-    [view {:style {:flex 1
-                   :position "relative"
-                   :background-color "white"}}
-     [animated-view
-      {:style (with-animation-styles
-                {:height height}
-                navbar-animation
-                :router)}
-      [(ui/component ctx :router)]]
-     [animated-view
-      {:style (with-animation-styles
-                {:bottom 0
-                 :width width
-                 :position "absolute"
-                 :translate-y navbar-height}
-                navbar-animation
-                :navbar)}
-      [(ui/component ctx :navbar)]]]))
+    [(ui/component ctx :sidebar)
+     [view {:style {:flex 1
+                    :position "relative"
+                    :background-color "white"}}
+      [animated-view
+       {:style (with-animation-styles
+                 {:height height}
+                 navbar-animation
+                 :router)}
+       [(ui/component ctx :router)]]
+      [animated-view
+       {:style (with-animation-styles
+                 {:bottom 0
+                  :width width
+                  :position "absolute"
+                  :translate-y navbar-height}
+                 navbar-animation
+                 :navbar)}
+       [(ui/component ctx :navbar)]]]]))
 
 (def component
   (ui/constructor {:renderer render
                    :subscription-deps [:animation]
                    :component-deps [:router
-                                    :navbar]}))
+                                    :navbar
+                                    :sidebar]}))

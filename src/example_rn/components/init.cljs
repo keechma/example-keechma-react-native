@@ -2,7 +2,8 @@
   (:require [example-rn.rn :refer [view text button]]
             [keechma.ui-component :as ui]
             [example-rn.util.dimensions :refer [dimensions]]
-            [example-rn.util.routing :refer [navigate-go!]]))
+            [example-rn.util.routing :refer [navigate-go!]]
+            [keechma.toolbox.ui :refer [<cmd]]))
 
 (defn render [ctx]
   (let [d (dimensions)]
@@ -19,7 +20,11 @@
      [button {:on-press #(navigate-go! {:key :login})
               :title "Open Login Popup"}]
      [button {:on-press #(navigate-go! {:key :taxi-select-type})
-              :title "Open Taxi Select Type Page"}]]))
+              :title "Open Taxi Select Type Page"}]
+     [button {:on-press #(<cmd ctx [:sidebar :open] :left)
+              :title "Open Left Sidebar"}]
+     [button {:on-press #(<cmd ctx [:sidebar :open] :right)
+              :title "Open Right Sidebar"}]]))
 
 (def component
   (ui/constructor {:renderer render}))

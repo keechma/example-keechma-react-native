@@ -45,6 +45,7 @@
      :vehicle-selector/translate-x (- width)
      :vehicle-selector/translate-y -90
      :vehicle/scale 1.55
+     :vehicle/translate-x 0
      :vehicle-subtitle/opacity 0
      :vehicle-fare/opacity 1
      :vehicle-info/opacity 0
@@ -66,10 +67,11 @@
      :vehicle-selector/translate-x vehicle-selector-translate-x
      :vehicle-selector/translate-y 0
      :vehicle/scale 1
+     :vehicle/translate-x -10
      :vehicle-subtitle/opacity 1
      :vehicle-fare/opacity 0
      :vehicle-info/opacity 1
-     :vehicle-info/scale 1}))
+     :vehicle-info/scale 1.2}))
 
 (defn panmove-values [args]
   (let [init-values (init-anim-values args)
@@ -170,7 +172,8 @@
         vehicles (sub> ctx :vehicles)]
     [view
      {:style {:width (* 3 width)
-              :flex-direction "row"}}
+              :flex-direction "row"
+              :justify-content "space-around"}}
      (map-indexed
       (fn [idx v]
         ^{:key (:id v)}
@@ -182,7 +185,8 @@
           {:style 
            (with-animation-styles
              {:width width
-              :align-items "center"}
+              :align-items "center"
+              :justify-content "center"}
              animation-data
              :vehicle)}
           
@@ -191,7 +195,7 @@
                          :border-radius 60
                          :margin-bottom 20
                          :background-color (if (= selected-vehicle (:id v)) "yellow" "gray")}}]
-          [text {:style {:font-size 36
+          [text {:style {:font-size 30
                          :text-align "center"}}
            (:title v)]
           [view
@@ -203,7 +207,7 @@
                        :width width}
                       animation-data
                       :vehicle-subtitle)}
-            [text {:style {:font-size 30
+            [text {:style {:font-size 24
                            :text-align "center"}}
              (:subtitle v)]]
            [animated-view
@@ -212,7 +216,7 @@
                        :width width}
                       animation-data
                       :vehicle-fare)} 
-            [text {:style {:font-size 30
+            [text {:style {:font-size 24
                            :text-align "center"}}
              (:fare v)]]]
           [animated-view
@@ -291,7 +295,7 @@
       [animated-view
        {:style
         (with-animation-styles
-          {:margin-left -10}
+          {}
           animation-data
           :vehicle-selector)}
        [render-vehicle-selector ctx]]

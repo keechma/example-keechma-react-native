@@ -20,7 +20,7 @@
     :fare "$ 0.00"
     :capacity "1 - 3"}
    {:id 3
-    :title "Zastava 128"
+    :title "Z 128"
     :subtitle "Getting serious, are we?"
     :fare "$ 0.00"
     :capacity "1 - 4"}])

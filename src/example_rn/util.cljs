@@ -33,7 +33,6 @@
 
 (defn with-animation-styles
   ([animation-styles] (with-animation-styles {} animation-styles))
-  ([static-styles animation-styles] (with-animation-styles static-styles animation-styles))
   ([static-styles animation-styles & a-ns]
    (let [a-styles (if (empty? a-ns) animation-styles (map #(select-keys-by-namespace animation-styles %) a-ns))]
      (process-transform-styles (apply merge (flatten [static-styles a-styles]))))))
