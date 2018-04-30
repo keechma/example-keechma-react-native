@@ -15,22 +15,27 @@
 
 (def img-map (js/require "./images/osm.png"))
 
-(def y-delta 190)
+(def y-delta 140)
 
-(defn init-done-animator [meta]
+(defn init-done-animator [type meta]
   (if (= :panmove (get-in meta [:prev :state]))
     (let [prev (:prev meta)
-          velocity (get-in prev [:gesture :velocity])]
+          velocity (get-in prev [:gesture :velocity])
+          [_ y-value] (:pan-value prev)
+          value (or y-value 0)
+          from-value (if (= :init type) (- 1 value) value)]
       {:type :spring
+       :fromValue from-value
        :config {:velocity velocity
-                :mass 0.3}})
+                :mass 0.4}})
     {:type   :timing
      :config {:duration 300
               :easing   {:type   :bezier
                          :values [0.2833 0.99 0.31833 0.99]}}}))
 
 (defn init-anim-values [args]
-  (let [{:keys [width]} (dimensions)]
+  (let [{:keys [width]} (dimensions)
+        selected-vehicle-index (:selected-vehicle-index args)]
     {:panel/translate-y 0
      :background/opacity 0
      :confirm/translate-y 0
@@ -42,7 +47,7 @@
      :vehicle-selector/scale (/ 1 3)
      :vehicle-selector/translate-x (- width)
      :vehicle-selector/translate-y -90
-     :vehicle/scale 1.5
+     :vehicle/scale 1.55
      :vehicle-subtitle/opacity 0
      :vehicle-fare/opacity 1
      :vehicle-info/opacity 0
@@ -52,7 +57,13 @@
      :vehicle-3/translate-x 0}))
 
 (defn done-anim-values [args]
-  (let [{:keys [width]} (dimensions)]
+  (let [{:keys [width]} (dimensions)
+        selected-vehicle-index (:selected-vehicle-index args)
+        vehicle-selector-translate-x (case selected-vehicle-index
+                                       0 0
+                                       1 (- width)
+                                       2 (- (* 2 width))
+                                       0)]
     {:panel/translate-y (- y-delta)
      :background/opacity 0.5
      :confirm/translate-y 400
@@ -62,16 +73,16 @@
      :title/opacity 0
      :title/translate-y -25
      :vehicle-selector/scale 1
-     :vehicle-selector/translate-x (- width)
-     :vehicle-selector/translate-y -20
+     :vehicle-selector/translate-x vehicle-selector-translate-x
+     :vehicle-selector/translate-y 0
      :vehicle/scale 1
      :vehicle-subtitle/opacity 1
      :vehicle-fare/opacity 0
      :vehicle-info/opacity 1
      :vehicle-info/scale 1
-     :vehicle-1/translate-x width
-     :vehicle-2/translate-x width
-     :vehicle-3/translate-x width}))
+     :vehicle-1/translate-x 0
+     :vehicle-2/translate-x 0
+     :vehicle-3/translate-x 0}))
 
 (defn panmove-values [args]
   (let [init-values (init-anim-values args)
@@ -86,17 +97,17 @@
      {} all-keys)))
 
 
-(defmethod a/values :taxi-select-type/init [ meta _]
+(defmethod a/values :taxi-select-type/init [meta _]
   (init-anim-values (:args meta)))
 
 (defmethod a/animator :taxi-select-type/init [meta _]
-  (init-done-animator meta))
+  (init-done-animator :init meta))
 
-(defmethod a/values :taxi-select-type/done [_ _]
+(defmethod a/values :taxi-select-type/done [meta _]
   (done-anim-values (:args meta)))
 
 (defmethod a/animator :taxi-select-type/done [meta _]
-  (init-done-animator meta))
+  (init-done-animator :done meta))
 
 (defmethod rna/pan-step :taxi-select-type/panmove [meta [x y]]
   (reduce-kv (fn [m k v]
@@ -123,7 +134,6 @@
         y-value (if (= (:dy gesture) 0)
                   init-pan-value
                   (clamp 0 1 (- 1 (helpers/map-value-in-range move-y 0 1 (- y0 init-spent-delta) (+ y0 init-left-delta)))))]
-
     [0 y-value]))
 
 (defn with-animation-styles
@@ -133,86 +143,76 @@
    (let [a-styles (if (empty? a-ns) animation-styles (map #(select-keys-by-namespace animation-styles %) a-ns))]
      (process-transform-styles (apply merge (flatten [static-styles a-styles]))))))
 
-(def vehicles
-  [{:id 1
-    :title "Yugo 45"
-    :subtitle "Might get you there"
-    :fare "$ 0.00"
-    :capacity "1 - 3"}
-   {:id 2
-    :title "Fiat 500"
-    :subtitle "Old one, not new"
-    :fare "$ 0.00"
-    :capacity "1 - 3"}
-   {:id 3
-    :title "Zastava 128"
-    :subtitle "Getting serious, are we?"
-    :fare "$ 0.00"
-    :capacity "1 - 4"}])
+
 
 (defn render-vehicle-selector [ctx]
   (let [{:keys [width]} (dimensions)
-        animation-data (:data (sub> ctx :animation :taxi-select-type))
-        selected-vehicle (sub> ctx :selected-vehicle)]
+        animation (sub> ctx :animation :taxi-select-type)
+        animation-data (:data animation)
+        selected-vehicle (sub> ctx :selected-vehicle)
+        vehicles (sub> ctx :vehicles)]
     [view
      {:style {:width (* 3 width)
               :flex-direction "row"}}
      (map-indexed
       (fn [idx v]
         ^{:key (:id v)}
-        [animated-view
-         {:style 
-          (with-animation-styles
-            {:width width
-             :align-items "center"}
-            animation-data
-            :vehicle
-            (keyword (str "vehicle-" (inc idx))))}
-         [view {:style {:width 120
-                        :height 120
-                        :border-radius 60
-                        :margin-bottom 20
-                        :background-color (if (= selected-vehicle (:id v)) "yellow" "gray")}}]
-         [text {:style {:font-size 36
-                        :text-align "center"}}
-          (:title v)]
-         [view
-          {:style {:position "relative"
-                   :width width}}
-          [animated-view
-           {:style (with-animation-styles
-                     {:position "absolute"
-                      :width width}
-                     animation-data
-                     :vehicle-subtitle)}
-           [text {:style {:font-size 30
-                          :text-align "center"}}
-            (:subtitle v)]]
-          [animated-view
-           {:style (with-animation-styles
-                     {:position "absolute"
-                      :width width}
-                     animation-data
-                     :vehicle-fare)} 
-           [text {:style {:font-size 30
-                          :text-align "center"}}
-            (:fare v)]]]
+        [touchable-opacity
+         {:on-press #(<cmd ctx [:taxi-select-type :select-vehicle] (:id v))}
          [animated-view
-          {:style
+          {:style 
            (with-animation-styles
-             {:margin-top 50}
+             {:width width
+              :align-items "center"}
              animation-data
-             :vehicle-info)}
-          [view {:style {:justify-content "space-between"
-                         :flex-direction "row"
-                         :width (* .7 width)}}
-           [text "Fare"]
-           [text (:fare v)]]
-          [view {:style {:justify-content "space-between"
-                         :flex-direction "row"
-                         :width (* .7 width)}}
-           [text "Capacity"]
-           [text (:capacity v)]]]]) vehicles)]))
+             :vehicle
+             (keyword (str "vehicle-" (inc idx))))}
+          
+          [view {:style {:width 120
+                         :height 120
+                         :border-radius 60
+                         :margin-bottom 20
+                         :background-color (if (= selected-vehicle (:id v)) "yellow" "gray")}}]
+          [text {:style {:font-size 36
+                         :text-align "center"}}
+           (:title v)]
+          [view
+           {:style {:position "relative"
+                    :width width}}
+           [animated-view
+            {:style (with-animation-styles
+                      {:position "absolute"
+                       :width width}
+                      animation-data
+                      :vehicle-subtitle)}
+            [text {:style {:font-size 30
+                           :text-align "center"}}
+             (:subtitle v)]]
+           [animated-view
+            {:style (with-animation-styles
+                      {:position "absolute"
+                       :width width}
+                      animation-data
+                      :vehicle-fare)} 
+            [text {:style {:font-size 30
+                           :text-align "center"}}
+             (:fare v)]]]
+          [animated-view
+           {:style
+            (with-animation-styles
+              {:margin-top 50}
+              animation-data
+              :vehicle-info)}
+           [view {:style {:justify-content "space-between"
+                          :flex-direction "row"
+                          :width (* .7 width)}}
+            [text "Fare"]
+            [text (:fare v)]]
+           [view {:style {:justify-content "space-between"
+                          :flex-direction "row"
+                          :width (* .7 width)}}
+            [text "Capacity"]
+            [text (:capacity v)]]]]]) vehicles)]))
 
 (defn render [ctx]
   (let [{:keys [width height padding-top padding-bottom]} (dimensions)
@@ -273,7 +273,7 @@
       [animated-view
        {:style
         (with-animation-styles
-          {}
+          {:margin-left -10}
           animation-data
           :vehicle-selector)}
        [render-vehicle-selector ctx]]
@@ -316,4 +316,6 @@
 
 (def component
   (ui/constructor {:renderer render
-                   :subscription-deps [:animation :selected-vehicle]}))
+                   :subscription-deps [:animation
+                                       :selected-vehicle
+                                       :vehicles]}))

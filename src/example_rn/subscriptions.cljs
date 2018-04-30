@@ -24,4 +24,5 @@
    :route-transition? route-transition?
    :animation         get-animation
    :open-story        (get-kv :open-story)
+   :vehicles          (get-kv :vehicles)
    :selected-vehicle  (get-kv :selected-vehicle)})
