@@ -6,8 +6,8 @@
             [keechma.toolbox.ui :refer [sub> <cmd]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
-            [example-rn.util :refer [process-transform-styles]]
-            [keechma.toolbox.animations.helpers :as helpers :refer [select-keys-by-namespace]]
+            [example-rn.util :refer [with-animation-styles]]
+            [keechma.toolbox.animations.helpers :as helpers]
             [example-rn.animations.rn :as rna]
             [example-rn.util :refer [clamp]]))
 
@@ -161,13 +161,6 @@
       [x-value init-y]
       [0 (calculate-panmove-y meta)])))
 
-
-(defn with-animation-styles
-  ([animation-styles] (with-animation-styles {} animation-styles))
-  ([static-styles animation-styles] (with-animation-styles static-styles animation-styles))
-  ([static-styles animation-styles & a-ns]
-   (let [a-styles (if (empty? a-ns) animation-styles (map #(select-keys-by-namespace animation-styles %) a-ns))]
-     (process-transform-styles (apply merge (flatten [static-styles a-styles]))))))
 
 (defn render-vehicle-selector [ctx]
   (let [{:keys [width]} (dimensions)

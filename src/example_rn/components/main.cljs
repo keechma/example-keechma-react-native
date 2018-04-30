@@ -6,8 +6,8 @@
             [example-rn.util.routing :refer [current-route>]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
-            [example-rn.util :refer [process-transform-styles]]
-            [keechma.toolbox.animations.helpers :refer [select-keys-by-namespace]]
+            [example-rn.util :refer [with-animation-styles]]
+            [keechma.toolbox.animations.helpers]
             [example-rn.util.dimensions :refer [dimensions]]))
 
 (def navbar-height 50)
@@ -58,18 +58,19 @@
                    :position "relative"
                    :background-color "white"}}
      [animated-view
-      {:style (merge
-               {:height height}
-               (process-transform-styles (select-keys-by-namespace navbar-animation :router)))}
+      {:style (with-animation-styles
+                {:height height}
+                navbar-animation
+                :router)}
       [(ui/component ctx :router)]]
      [animated-view
-      {:style (process-transform-styles
-               (merge
+      {:style (with-animation-styles
                 {:bottom 0
                  :width width
                  :position "absolute"
                  :translate-y navbar-height}
-                (select-keys-by-namespace navbar-animation :navbar)))}
+                navbar-animation
+                :navbar)}
       [(ui/component ctx :navbar)]]]))
 
 (def component

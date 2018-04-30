@@ -8,8 +8,7 @@
             [keechma.toolbox.ui :refer [<cmd sub>]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
-            [example-rn.util :refer [process-transform-styles]]
-            [keechma.toolbox.animations.helpers :refer [select-keys-by-namespace]]))
+            [example-rn.util :refer [with-animation-styles]]))
 
 (def items
   [{:id 1
@@ -108,20 +107,21 @@
         full-height (- (:height (dimensions)) navbar-height)
         animation (:data (sub> ctx :animation :open-story))]
     [animated-view
-     {:style (process-transform-styles
-              (merge {:position "absolute"
-                      :width width
-                      :height full-height
-                      :top (:page-y cell)}
-                     (select-keys-by-namespace animation :container)))}
+     {:style (with-animation-styles
+               {:position "absolute"
+                :width width
+                :height full-height
+                :top (:page-y cell)}
+               animation
+               :container)}
      [animated-view
-      {:style (process-transform-styles
-               (merge {:background-color "black"
-                       :position "absolute"
-                       :height "100%"
-                       :width "100%"
-                       :opacity 0}
-                      (select-keys-by-namespace animation :background)))}]
+      {:style (with-animation-styles {:background-color "black"
+                                      :position "absolute"
+                                      :height "100%"
+                                      :width "100%"
+                                      :opacity 0}
+                animation
+                :background)}]
      [view {:style {:position "relative"
                     :width width
                     :height height
@@ -133,19 +133,21 @@
                       :height height
                       :position "absolute"}}]
       [animated-view
-       {:style (process-transform-styles
-                (merge {:background-color "rgba(0,0,0,0.8)"
-                        :padding 20}
-                       (select-keys-by-namespace animation :title)))}
+       {:style  (with-animation-styles 
+                  {:background-color "rgba(0,0,0,0.8)"
+                   :padding 20}
+                  animation
+                  :title)}
        [text
         {:style {:font-size 36
                  :color "white"}}
         (:title item)]]]
      [animated-view
-      {:style (process-transform-styles
-               (merge {:opacity 0
-                       :padding 20}
-                      (select-keys-by-namespace animation :body)))}
+      {:style (with-animation-styles
+                {:opacity 0
+                 :padding 20}
+                animation
+                :body)}
       [text {:style {:font-size 26
                      :color "white"
                      :margin-bottom 20}}

@@ -1,6 +1,7 @@
 (ns example-rn.util
   (:require [camel-snake-kebab.core :refer [->camelCase]]
-            [promesa.core :as p]))
+            [promesa.core :as p]
+            [keechma.toolbox.animations.helpers :as helpers :refer [select-keys-by-namespace]]))
 
 (def transform-styles
   [:perspective :rotate :rotate-x :rotate-y :rotate-z :scale :scale-x :scale-y :translate-x :translate-y :skew-x :skew-y])
@@ -29,3 +30,10 @@
 
 (defn clamp [min-value max-value value]
   (max min-value (min max-value value)))
+
+(defn with-animation-styles
+  ([animation-styles] (with-animation-styles {} animation-styles))
+  ([static-styles animation-styles] (with-animation-styles static-styles animation-styles))
+  ([static-styles animation-styles & a-ns]
+   (let [a-styles (if (empty? a-ns) animation-styles (map #(select-keys-by-namespace animation-styles %) a-ns))]
+     (process-transform-styles (apply merge (flatten [static-styles a-styles]))))))

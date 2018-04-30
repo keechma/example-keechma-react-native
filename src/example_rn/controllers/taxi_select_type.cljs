@@ -88,7 +88,9 @@
 
     :select-vehicle 
     (pipeline! [value app-db]
+      (a/cancel-animation! app-db :taxi-select-type)
       (pp/commit! (assoc-in app-db [:kv :selected-vehicle] value))
+      (pp/commit! (render-animation-end app-db :taxi-select-type/init nil (animation-args app-db)))
       (pp/execute! :wait-user-interaction nil))
 
     :wait-user-interaction 
