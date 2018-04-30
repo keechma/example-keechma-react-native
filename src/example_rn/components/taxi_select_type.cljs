@@ -11,8 +11,6 @@
             [example-rn.animations.rn :as rna]
             [example-rn.util :refer [clamp]]))
 
-
-
 (def img-map (js/require "./images/osm.png"))
 
 (def y-delta 140)
@@ -313,14 +311,18 @@
            :padding-top 10
            :left 10
            :bottom (+ 10 y-delta)
+           :z-index 1
+           :elevation 1
            :width "100%"}
           animation-data
           :confirm)}
-       [view {:style {:background-color "#222"
-                      :padding 15
-                      :width "100%"}}
-        [text {:style {:color "white"
-                       :text-align "center"}} "CONFIRM TAXI"]]]
+       [touchable-opacity
+        {:on-press #(navigate-go! {:key :init})}
+        [view {:style {:background-color "#222"
+                       :padding 15
+                       :width "100%"}}
+         [text {:style {:color "white"
+                        :text-align "center"}} "GO BACK"]]]]
       [animated-view
        {:style
         (with-animation-styles
