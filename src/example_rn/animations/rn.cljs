@@ -1,6 +1,6 @@
 (ns example-rn.animations.rn
   (:require [example-rn.rn :refer [animated easing PanResponder]]
-            [oops.core :refer [ocall+ ocall oget oapply+]]
+            [oops.core :refer [ocall+ ocall oget oget+ oapply+]]
             [cljs.core.async :refer [put! chan pipe close! <!]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.helpers :as helpers]
@@ -43,13 +43,22 @@
 
 (defn setup-easing [config]
   (if-let [e (:easing config)]
-    (assoc config :easing (oapply+ easing (name (:type e)) (clj->js (:values e))))
+    (let [values (:values e)
+          easing-type (name (:type e))
+          easing-fn (if values
+                      (oapply+ easing easing-type (clj->js values))
+                      (oget+ easing easing-type))]
+      (assoc config :easing easing-fn))
     config))
 
 (defn get-animated [animated-value {:keys [type config]}]
-  (ocall+ animated (name type) animated-value
-          (clj->js (-> (merge {:useNativeDriver true :toValue 1} config)
-                       setup-easing))))
+  (let [loop? (:loop? config)
+        a (ocall+ animated (name type) animated-value
+                  (clj->js (-> (merge {:useNativeDriver true :toValue 1} config)
+                               setup-easing)))]
+    (if loop?
+      (ocall animated "loop" a)
+      a)))
 
 (defn make-animated-producer [config]
   (fn [res-chan _]
@@ -132,19 +141,17 @@
     :skew-y})
 
 (defn prepare-values [style]
-  (reduce-kv
-   (fn [m k v]
-     (assoc m k
-            (if (contains? animatable-props (keyword (name k)))
-              {:value v :animatable true}
-              {:value v :animatable false})))
-   {} style))
+  (let [prepared (helpers/prepare-values style)]
+    (reduce-kv
+     (fn [m k v]
+       (assoc m k (assoc v :animatable (contains? animatable-props (keyword (name k))))))
+     {} prepared)))
 
 (defn start-animation-values [config animated start-end]
   (reduce-kv (fn [m k v]
                (let [{:keys [start end]} v
-                     animatable? (:animatable start)]
-                 (if animatable?
+                     animatable (:animatable start)]
+                 (if animatable
                    (assoc m k (ocall animated "interpolate"
                                      (clj->js {:inputRange [(get-from-value config) (get-to-value config)]
                                                :outputRange [(:value start) (:value end)]})))
@@ -152,15 +159,48 @@
              {} start-end))
 
 (defn end-animation-values [value from-value to-value current start-end]
-  (reduce-kv (fn [m k v]
-               (let [{:keys [start end]} v
-                     animatable? (:animatable start)
-                     start-value (or (:value start) (:value end))
-                     end-value (or (:value end) (:value start))]
-                 (if animatable?
-                   (assoc m k (helpers/map-value-in-range value start-value end-value from-value to-value))
-                   (assoc m k (or (:value end) (:value start))))))
-             current start-end))
+  (reduce-kv
+   (fn [m k v]
+     (let [{:keys [start end]} v
+           animatable (:animatable start)
+           start-value (or (:value start) (:value end))
+           end-value (or (:value end) (:value start))]
+
+       (if animatable
+         (let [new-value
+               (cond
+                 (= start-value end-value) end-value
+                 (= :color animatable) (helpers/interpolate-color value start-value end-value from-value to-value)
+                 (or (= :unit animatable) (= :number animatable)) (helpers/map-value-in-range value start-value end-value from-value to-value)
+                 :else end-value)]
+           (assoc m k (if (= :unit animatable) (str new-value (:unit start)) new-value)))
+         (assoc m k (or (:value end) (:value start))))))
+   current start-end))
+
+(defn using-native-driver? [config]
+  (let [native-driver? (get-in config [:config :useNativeDriver])]
+    (if (nil? native-driver?)
+      true
+      native-driver?)))
+
+(defn get-start-end [prev-values values config]
+  (if (using-native-driver? config)
+    (helpers/start-end-values (prepare-values prev-values) (prepare-values values))
+    (let [prepared (helpers/start-end-values
+                    (helpers/prepare-values prev-values)
+                    (helpers/prepare-values values))]
+      (reduce-kv
+       (fn [m k v]
+         (if (= :unit (get-in v [:start :animatable]))
+           (let [start-value (str (get-in v [:start :value])
+                                  (name (get-in v [:start :unit])))
+                 end-value (str (get-in v [:end :value])
+                                (name (get-in v [:end :unit])))]
+             (assoc m k (-> v
+                            (assoc-in [:start :value] start-value)
+                            (assoc-in [:end :value] end-value))))
+           (assoc m k v)))
+       {} prepared))))
 
 (defn animate-state!
   ([task-runner! app-db identifier] (animate-state! task-runner! app-db identifier nil nil))
@@ -173,7 +213,7 @@
          init-meta (make-initial-meta identifier args prev-meta)
          config (a/animator init-meta prev-values)
          values (a/values init-meta)
-         start-end (helpers/start-end-values (prepare-values prev-values) (prepare-values values))
+         start-end (get-start-end prev-values values config)
          producer (make-animated-producer config)
          task-id (a/animation-id id version)]
      (task-runner!

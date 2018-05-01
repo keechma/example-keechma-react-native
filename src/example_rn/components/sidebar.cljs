@@ -114,7 +114,7 @@
                  :left sidebar-width
                  :width (if (= 0 (:overlay/opacity animation-data)) 0 width)
                  :height "100%"
-                 :background-color "rgba(255,255,255,0.8)"}
+                 :background-color "rgba(0,0,0,0.5)"}
                 animation-data
                 :overlay)}]
      [view {:style {:background-color "#eee"

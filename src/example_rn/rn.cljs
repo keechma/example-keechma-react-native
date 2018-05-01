@@ -19,6 +19,9 @@
 (def list-view (r/adapt-react-class (oget ReactNative "ListView")))
 (def flat-list (r/adapt-react-class (oget ReactNative "FlatList")))
 (def animated-view (r/adapt-react-class (oget animated "View")))
+(def animated-text (r/adapt-react-class (oget animated "Text")))
+(def animated-image (r/adapt-react-class (oget animated "Image")))
+
 (def animated-scroll-view (r/adapt-react-class (oget animated "ScrollView")))
 (def animated-flat-list (r/adapt-react-class (ocall animated "createAnimatedComponent" (oget ReactNative "FlatList"))))
 (def image (r/adapt-react-class (oget ReactNative "Image")))

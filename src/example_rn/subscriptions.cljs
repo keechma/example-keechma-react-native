@@ -25,4 +25,5 @@
    :animation         get-animation
    :open-story        (get-kv :open-story)
    :vehicles          (get-kv :vehicles)
-   :selected-vehicle  (get-kv :selected-vehicle)})
+   :selected-vehicle  (get-kv :selected-vehicle)
+   :button            (get-kv :button)})

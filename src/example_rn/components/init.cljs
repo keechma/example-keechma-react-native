@@ -21,6 +21,8 @@
               :title "Open Login Popup"}]
      [button {:on-press #(navigate-go! {:key :taxi-select-type})
               :title "Open Taxi Select Type Page"}]
+     [button {:on-press #(navigate-go! {:key :button})
+              :title "Open Button Page"}]
      [button {:on-press #(<cmd ctx [:sidebar :open] :left)
               :title "Open Left Sidebar"}]
      [button {:on-press #(<cmd ctx [:sidebar :open] :right)

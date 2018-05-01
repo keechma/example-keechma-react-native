@@ -8,7 +8,8 @@
             [example-rn.components.navbar :as navbar]
             [example-rn.components.stories :as stories]
             [example-rn.components.taxi-select-type :as taxi-select-type]
-            [example-rn.components.sidebar :as sidebar]))
+            [example-rn.components.sidebar :as sidebar]
+            [example-rn.components.button :as button]))
 
 (def components
   {:main             main/component
@@ -20,4 +21,5 @@
    :navbar           navbar/component
    :stories          stories/component
    :taxi-select-type taxi-select-type/component
-   :sidebar          sidebar/component})
+   :sidebar          sidebar/component
+   :button           button/component})
