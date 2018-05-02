@@ -77,24 +77,13 @@
   (make-spring-animator {:tension 150}))
 
 (defmethod a/values :button/loader-start [_ _]
-  {:rotate "0deg"
-   :scale 1})
+  {:rotate "0deg"})
 
 (defmethod a/values :button/loader-end [_ _]
-  {:rotate "360deg"
-   :scale 1.05})
+  {:rotate "360deg"})
 
 (defmethod a/animator :button/loader-end [_ _]
   {:type :timing
-   :get-input-range (fn [property start end]
-                      (println property)
-                      (case property
-                        :scale [start (/ (- end start) 2) end]
-                        [start end]))
-   :get-output-range (fn [property start end]
-                       (case property
-                         :scale [start end start]
-                         [start end]))
    :config {:duration 750
             :loop? true
             :easing {:type :linear}}})
