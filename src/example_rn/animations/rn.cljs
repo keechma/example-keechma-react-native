@@ -10,6 +10,23 @@
 
 (def AnimatedValue (oget animated "Value"))
 
+(defn interpolate-color
+  ([value start-color end-color]
+   (interpolate-color value start-color end-color 0))
+  ([value start-color end-color from-low]
+   (interpolate-color value start-color end-color from-low 1))
+  ([value start-color end-color from-low from-high]
+   (interpolate-color value start-color end-color from-low from-high false))
+  ([value start-color end-color from-low from-high rgb?]
+   (let [[start-r start-g start-b] (helpers/hex->rgb start-color)
+         [end-r end-g end-b] (helpers/hex->rgb end-color)
+         r (helpers/map-value-in-range value start-r end-r from-low from-high)
+         g (helpers/map-value-in-range value start-g end-g from-low from-high)
+         b (helpers/map-value-in-range value start-b end-b from-low from-high)]
+     (if rgb?
+       (str "rgb(" r "," g "," b ")")
+       (helpers/rgb->hex (map #(.round js/Math (min 255 (max % 0))) [r g b]))))))
+
 
 (defn make-initial-meta
   ([identifier] (make-initial-meta identifier nil nil))
@@ -152,10 +169,10 @@
            (assoc m k v))))
      {} prepared)))
 
-(defn get-input-range [prop start end]
+(defn default-get-input-range [prop start end]
   [start end])
 
-(defn get-output-range [prop start end]
+(defn default-get-output-range [prop start end]
   [start end])
 
 (defn prepare-output-range [values]
@@ -166,39 +183,70 @@
        values))
 
 (defn start-animation-values [config animated start-end]
-  (reduce-kv (fn [m k v]
-               (let [{:keys [start end]} v
-                     animatable          (:animatable start)]
+  (let [from-value (get-from-value config)
+        to-value (get-to-value config)]
+    (reduce-kv (fn [m k v]
+                 (let [{:keys [start end]} v
+                       animatable          (:animatable start)]
 
-                 (if animatable
-                   (let [get-input-range    (or (:get-input-range config) get-input-range)
-                         get-output-range   (or (:get-output-range config) get-output-range)
-                         input-range        (apply get-input-range [k (get-from-value config) (get-to-value config)])
-                         output-range       (apply get-output-range [k start end])
-                         interpolate-config {:inputRange input-range
-                                             :outputRange (prepare-output-range output-range)}]
-                     (assoc m k (ocall animated "interpolate" (clj->js interpolate-config))))
-                   (assoc m k (:value start)))))
-             {} start-end))
+                   (if animatable
+                     (let [get-input-range    (or (:get-input-range config) default-get-input-range)
+                           get-output-range   (or (:get-output-range config) default-get-output-range)
+                           input-range        (apply get-input-range [k from-value to-value])
+                           output-range       (apply get-output-range [k start end])
+                           interpolate-config {:inputRange input-range
+                                               :outputRange (prepare-output-range output-range)}]
+                       (assoc m k (ocall animated "interpolate" (clj->js interpolate-config))))
+                     (assoc m k (:value start)))))
+               {} start-end)))
 
-(defn end-animation-values [value from-value to-value current start-end]
-  (reduce-kv
-   (fn [m k v]
-     (let [{:keys [start end]} v
-           animatable (:animatable start)
-           start-value (or (:value start) (:value end))
-           end-value (or (:value end) (:value start))]
+(defn get-end-range-subvec-index [value input-range]
+  (if (>= 2 (count input-range))
+    0
+    (loop [idx 0]
+      (if (= idx (- (count input-range) 2))
+        idx
+        (if (<= (get input-range idx)
+                value
+                (get input-range (inc idx)))
+          idx
+          (recur (inc idx)))))))
 
-       (if animatable
-         (let [new-value
-               (cond
-                 (= start-value end-value) end-value
-                 (= :color animatable) (helpers/interpolate-color value start-value end-value from-value to-value)
-                 (or (= :unit animatable) (= :number animatable)) (helpers/map-value-in-range value start-value end-value from-value to-value)
-                 :else end-value)]
-           (assoc m k (if (= :unit animatable) (str new-value (:unit end)) new-value)))
-         (assoc m k (or (:value end) (:value start))))))
-   current start-end))
+(defn end-animation-values [value config current start-end]
+  (let [from-value (get-from-value config)
+        to-value (get-to-value config)]
+    (reduce-kv
+     (fn [m k v]
+       (let [{:keys [start end]} v
+             get-input-range (or (:get-input-range config) default-get-input-range)
+             get-output-range (or (:get-output-range config) default-get-output-range)
+             input-range (apply get-input-range [k from-value to-value])
+             output-range (apply get-output-range [k start end])
+
+             end-range-subvec-index (get-end-range-subvec-index value input-range)
+
+             [f-from-value f-to-value] (subvec input-range end-range-subvec-index (+ 2 end-range-subvec-index))
+             [f-start f-end] (subvec output-range end-range-subvec-index (+ 2 end-range-subvec-index))
+ 
+             animatable (:animatable start)
+             start-value (or (:value f-start) (:value f-end))
+             end-value (or (:value f-end) (:value f-start))]
+
+         (when (< 2 (count input-range))
+           (println k input-range end-range-subvec-index value [f-from-value f-to-value] [start-value end-value]))
+
+         (if animatable
+           (let [new-value
+                 (cond
+                   (= start-value end-value) end-value
+                   (= :color animatable) (interpolate-color value start-value end-value f-from-value f-to-value)
+                   (or (= :unit animatable) (= :number animatable)) (helpers/map-value-in-range value start-value end-value f-from-value f-to-value)
+                   :else end-value)]
+             (when (< 2 (count input-range))
+               (println new-value " ---- " (ocall (get m k) "__getValue")))
+             (assoc m k (if (= :unit animatable) (str new-value (:unit end)) new-value)))
+           (assoc m k (or (:value end) (:value start))))))
+     current start-end)))
 
 (defn using-native-driver? [config]
   (let [native-driver? (get-in config [:config :useNativeDriver])]
@@ -236,8 +284,7 @@
             (let [current-data (:data (a/get-animation app-db id version))
                   next-data (end-animation-values
                              value 
-                             (get-from-value config)
-                             (get-to-value config)
+                             config
                              current-data
                              start-end)
                   next-app-db (assoc-in app-db
@@ -353,6 +400,7 @@
                (let [runners (map #(run-animation-in-group app-db %) animations)]
                  (->> (p/all (map #(% ctrl app-db-atom value) runners))
                       (p/map (fn [results]
+                               (println "RESULTS")
                                (let [break? (some #(= % :keechma.toolbox.pipeline.core/break) results)]
                                  (if break?
                                    (resolve :keechma.toolbox.pipeline.core/break)

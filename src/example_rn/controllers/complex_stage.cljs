@@ -18,14 +18,18 @@
                  (render-animation-end :background/init)
                  (render-animation-end :main/init)))}
    {:on-start (pipeline! [value app-db]
+                (delay-pipeline 200)
                 (pp/execute! :cancel nil)
+                (gensym "P")
+                (println "BEFORE" value)
                 (rna/blocking-group-animate-state!
                  app-db
                  {:animation :background/done}
                  {:animation :main/done
-                  :delay 5000})
-                (println "AFTER GROUP"))
+                  :delay 120})
+                (println "AFTER" value))
     :cancel (pipeline! [value app-db]
-                   ;;(delay-pipeline 1000)
-                   ;;(a/cancel-animation! app-db :background)
+                   (delay-pipeline 200)
+                   (a/stop-animation! app-db :background)
               )}))
+ 
