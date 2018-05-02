@@ -9,6 +9,7 @@
 
 (def AnimatedValue (oget animated "Value"))
 
+
 (defn make-initial-meta
   ([identifier] (make-initial-meta identifier nil nil))
   ([identifier args] (make-initial-meta identifier args nil))
@@ -144,17 +145,38 @@
   (let [prepared (helpers/prepare-values style)]
     (reduce-kv
      (fn [m k v]
-       (assoc m k (assoc v :animatable (contains? animatable-props (keyword (name k))))))
+       (let [native-animatable? (contains? animatable-props (keyword (name k)))]
+         (if (not native-animatable?)
+           (assoc m k (assoc v :animatable false))
+           (assoc m k v))))
      {} prepared)))
+
+(defn get-input-range [prop start end]
+  [start end])
+
+(defn get-output-range [prop start end]
+  [start end])
+
+(defn prepare-output-range [values]
+  (map (fn [v]
+         (if (= :unit (:animatable v))
+           (str (:value v) (name (:unit v)))
+           (:value v)))
+       values))
 
 (defn start-animation-values [config animated start-end]
   (reduce-kv (fn [m k v]
                (let [{:keys [start end]} v
-                     animatable (:animatable start)]
+                     animatable          (:animatable start)]
+
                  (if animatable
-                   (assoc m k (ocall animated "interpolate"
-                                     (clj->js {:inputRange [(get-from-value config) (get-to-value config)]
-                                               :outputRange [(:value start) (:value end)]})))
+                   (let [get-input-range    (or (:get-input-range config) get-input-range)
+                         get-output-range   (or (:get-output-range config) get-output-range)
+                         input-range        (apply get-input-range [k (get-from-value config) (get-to-value config)])
+                         output-range       (apply get-output-range [k start end])
+                         interpolate-config {:inputRange input-range
+                                             :outputRange (prepare-output-range output-range)}]
+                     (assoc m k (ocall animated "interpolate" (clj->js interpolate-config))))
                    (assoc m k (:value start)))))
              {} start-end))
 
@@ -173,7 +195,7 @@
                  (= :color animatable) (helpers/interpolate-color value start-value end-value from-value to-value)
                  (or (= :unit animatable) (= :number animatable)) (helpers/map-value-in-range value start-value end-value from-value to-value)
                  :else end-value)]
-           (assoc m k (if (= :unit animatable) (str new-value (:unit start)) new-value)))
+           (assoc m k (if (= :unit animatable) (str new-value (:unit end)) new-value)))
          (assoc m k (or (:value end) (:value start))))))
    current start-end))
 
@@ -189,18 +211,7 @@
     (let [prepared (helpers/start-end-values
                     (helpers/prepare-values prev-values)
                     (helpers/prepare-values values))]
-      (reduce-kv
-       (fn [m k v]
-         (if (= :unit (get-in v [:start :animatable]))
-           (let [start-value (str (get-in v [:start :value])
-                                  (name (get-in v [:start :unit])))
-                 end-value (str (get-in v [:end :value])
-                                (name (get-in v [:end :unit])))]
-             (assoc m k (-> v
-                            (assoc-in [:start :value] start-value)
-                            (assoc-in [:end :value] end-value))))
-           (assoc m k v)))
-       {} prepared))))
+      prepared)))
 
 (defn animate-state!
   ([task-runner! app-db identifier] (animate-state! task-runner! app-db identifier nil nil))

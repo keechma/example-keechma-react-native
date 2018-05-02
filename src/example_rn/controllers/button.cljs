@@ -37,14 +37,14 @@
   (pipeline! [value app-db]
     (pp/commit! (render-animation-end app-db :button/button-loader))
     (rna/blocking-animate-state! app-db :button/success-notice)
-    (delay-pipeline 1000)
+    (delay-pipeline 500)
     (rna/blocking-animate-state! app-db :button/init)))
 
 (defn button-animation-error! []
   (pipeline! [value app-db]
     (pp/commit! (render-animation-end app-db :button/button-loader))
     (rna/blocking-animate-state! app-db :button/fail-notice)
-    (delay-pipeline 1000)
+    (delay-pipeline 500)
     (rna/blocking-animate-state! app-db :button/fail-init)))
 
 (def controller

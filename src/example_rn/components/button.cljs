@@ -12,7 +12,7 @@
             [keechma.app-state.react-native-router :refer [navigate!]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
-            [example-rn.util :refer [with-animation-styles]]
+            [example-rn.util :refer [with-animation-styles process-transform-styles]]
             [example-rn.util.dimensions :refer [dimensions]]
             [keechma.toolbox.animations.helpers :refer [select-keys-by-namespace]]
             [keechma.toolbox.ui :refer [<cmd sub>]]))
@@ -77,15 +77,25 @@
   (make-spring-animator {:tension 150}))
 
 (defmethod a/values :button/loader-start [_ _]
-  {:rotate "0deg"})
+  {:rotate "0deg"
+   :scale 1})
 
 (defmethod a/values :button/loader-end [_ _]
-  {:rotate "360deg"})
+  {:rotate "360deg"
+   :scale 1.05})
 
 (defmethod a/animator :button/loader-end [_ _]
   {:type :timing
-   :config {:duration 500
-            :useNativeDriver false
+   :get-input-range (fn [property start end]
+                      (println property)
+                      (case property
+                        :scale [start (/ (- end start) 2) end]
+                        [start end]))
+   :get-output-range (fn [property start end]
+                       (case property
+                         :scale [start end start]
+                         [start end]))
+   :config {:duration 750
             :loop? true
             :easing {:type :linear}}})
 
@@ -176,24 +186,25 @@
 
 (defn render-loader [animation]
   (let [animation-data (:data animation)] 
-    [view {:style {:border-radius 25
-                   :height 50
-                   :width 50
-                   :background-color "#555"
-                   :overflow "hidden"
-                   :justify-content "center"
-                   :align-items "center"
-                   :position "relative" }}
-     [animated-view {:style 
-                     (with-animation-styles
-                       {:background-color "#3883ff"
-                        :width 50
-                        :height 25
-                        :margin-left -25
-                        :position "absolute"
-                        :translate-x 25
-                        :translate-y 25}
-                       animation-data)}]
+    [animated-view 
+     {:style (with-animation-styles
+               {:border-radius 25
+                :height 50
+                :width 50
+                :background-color "#555"
+                :overflow "hidden"
+                :justify-content "center"
+                :align-items "center"
+                :position "relative"}
+               animation-data)}
+     [view {:style (process-transform-styles
+                    {:background-color "#3883ff"
+                     :width 50
+                     :height 25
+                     :margin-left -25
+                     :position "absolute"
+                     :translate-x 25
+                     :translate-y 25})}]
      [view {:style {:border-radius 25
                     :background-color "#222"
                     :width 42
