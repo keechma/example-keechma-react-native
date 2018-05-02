@@ -9,7 +9,8 @@
             [example-rn.components.stories :as stories]
             [example-rn.components.taxi-select-type :as taxi-select-type]
             [example-rn.components.sidebar :as sidebar]
-            [example-rn.components.button :as button]))
+            [example-rn.components.button :as button]
+            [example-rn.components.complex-stage :as complex-stage]))
 
 (def components
   {:main             main/component
@@ -22,4 +23,5 @@
    :stories          stories/component
    :taxi-select-type taxi-select-type/component
    :sidebar          sidebar/component
-   :button           button/component})
+   :button           button/component
+   :complex-stage    complex-stage/component})

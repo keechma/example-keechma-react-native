@@ -4,7 +4,8 @@
             [cljs.core.async :refer [put! chan pipe close! <!]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.helpers :as helpers]
-            [keechma.toolbox.tasks :as t])
+            [keechma.toolbox.tasks :as t]
+            [promesa.core :as p])
   (:require-macros [cljs.core.async.macros :refer [go-loop]]))
 
 (def AnimatedValue (oget animated "Value"))
@@ -322,10 +323,44 @@
                          :meta next-meta})
               app-db))))))))
 
-
-
 (def blocking-animate-state! (partial animate-state! t/blocking-task!))
 (def non-blocking-animate-state! (partial animate-state! t/non-blocking-task!))
 
 (def blocking-panresponder-animate-state! (partial panresponder-animate-state! t/blocking-task!))
 (def non-blocking-panresponder-animate-state! (partial panresponder-animate-state! t/blocking-task!))
+
+(defn run-animation-in-group [app-db animation-config]
+  (let [{:keys [animation version args]} animation-config
+        a-delay (or (:delay animation-config) 0)
+        runner #(blocking-animate-state! app-db animation version args)]
+    (if (= 0 a-delay)
+      (runner)
+      (fn [ctrl app-db-atom value]
+        (p/promise (fn [resolve _]
+                     (js/setTimeout
+                      (fn []
+                        (let [r (runner)]
+                          (->> (r ctrl app-db-atom value)
+                               (p/map resolve)))) 
+                      a-delay)))))))
+
+(defn group-animate-state! [blocking? app-db & animations]
+  (with-meta
+    (fn [ctrl app-db-atom value]
+      (let [done-promise
+            (p/promise
+             (fn [resolve _]
+               (let [runners (map #(run-animation-in-group app-db %) animations)]
+                 (->> (p/all (map #(% ctrl app-db-atom value) runners))
+                      (p/map (fn [results]
+                               (let [break? (some #(= % :keechma.toolbox.pipeline.core/break) results)]
+                                 (if break?
+                                   (resolve :keechma.toolbox.pipeline.core/break)
+                                   (resolve)))))))))]
+        (if blocking?
+          done-promise
+          nil)))
+    {:pipeline? true}))
+
+(def blocking-group-animate-state! (partial group-animate-state! true))
+(def non-blocking-group-animate-state! (partial group-animate-state! false))

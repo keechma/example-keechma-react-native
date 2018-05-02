@@ -7,7 +7,8 @@
    :stories          :slide
    :login            :popup
    :taxi-select-type :popup
-   :button           :popup})
+   :button           :popup
+   :complex-stage    :popup})
 
 (def pages (keys page-transitions))
 

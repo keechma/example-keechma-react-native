@@ -4,7 +4,8 @@
             [example-rn.controllers.story-detail :as story-detail]
             [example-rn.controllers.taxi-select-type :as taxi-select-type]
             [example-rn.controllers.sidebar :as sidebar]
-            [example-rn.controllers.button :as button]))
+            [example-rn.controllers.button :as button]
+            [example-rn.controllers.complex-stage :as complex-stage]))
 
 (def controllers
   {:route-transition route-transition/controller
@@ -12,4 +13,5 @@
    :story-detail     story-detail/controller
    :taxi-select-type taxi-select-type/controller
    :sidebar          sidebar/controller
-   :button           button/controller})
+   :button           button/controller
+   :complex-stage    complex-stage/controller})
