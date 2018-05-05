@@ -18,14 +18,16 @@
             [keechma.toolbox.animations.helpers :refer [select-keys-by-namespace]]))
 
 (defmethod a/values :background/init [_]
-  {:opacity 1;; 0.3
-   :height 0
+  {:opacity 0;; 0.3
+   ;;:height 0
+   :scale-x 0.5
    :background-color "#ff3300"
    })
 
 (defmethod a/values :background/done []
   {:opacity 1
-   :height 100
+   ;;:height 100
+   :scale-x 1
    :background-color "#ff00ff"
    })
 
@@ -37,22 +39,26 @@
                        [start end start])
    :config {:duration 500
             :loop? true
-            :easing {:type :linear}
+            ;;:easing {:type :linear}
             :useNativeDriver false}})
 
 
 (defmethod a/values :main/init [_]
   {:opacity 0.3
-   :height 0})
+   :scale-x 0
+   ;;:height 0
+   })
 
 (defmethod a/values :main/done []
   {:opacity 1
-   :height 100})
+   :scale-x 1
+   ;;:height 100
+   })
 
 (defmethod a/animator :main/done [_ _]
   {:type :timing
    :config {:duration 500
-            :easing {:type :linear}
+            ;;:easing {:type :linear}
             :useNativeDriver false}})
 
 

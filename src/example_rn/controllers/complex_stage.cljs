@@ -29,7 +29,7 @@
                   :delay 120})
                 (println "AFTER" value))
     :cancel (pipeline! [value app-db]
-                   (delay-pipeline 200)
+                   (delay-pipeline 2000)
                    (a/stop-animation! app-db :background)
               )}))
  

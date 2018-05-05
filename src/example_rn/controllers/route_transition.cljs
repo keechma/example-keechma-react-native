@@ -4,7 +4,10 @@
             [example-rn.util.routing :as routing]
             [example-rn.domain.routing :refer [decide-animation pages-with-navbar]]
             [keechma.toolbox.animations.core :refer [render-animation-end]]
-            [example-rn.animations.rn :as rna]))
+            [example-rn.animations.rn :as rna]
+            [keechma.toolbox.tasks :refer [blocking-raf! stop-task stop-task! cancel-task!]]
+            [oops.core :refer [ocall]]
+            [keechma.toolbox.dataloader.controller :refer [dataloader-status-key]]))
 
 (defn track-route-transition [app-db]
   (let [route-data       (get-in app-db [:route :data])
@@ -45,13 +48,48 @@
       (and (not prev-navbar?) (not current-navbar?)) :keep-hidden
       :else                                          nil)))
 
+(def block-route-threshold 1000)
+(def block-loader-threshold 1000)
+
+(defn block-route-transition! []
+  (blocking-raf!
+   :block-route-transition
+   (fn [{:keys [started-at id]} app-db]
+     (let [now (ocall js/Date "now")
+           ms-diff (- now started-at)
+           spent-threshold? (< block-route-threshold ms-diff)
+           dataloader-done? (= :loaded (get-in app-db dataloader-status-key))]
+       (if (or dataloader-done? spent-threshold?)
+         (let [new-app-db (if dataloader-done? app-db (assoc-in app-db [:kv :show-loader?] true))]
+           (stop-task new-app-db id))
+         app-db)))))
+
+(defn block-loader-hide! []
+  (blocking-raf!
+   :block-route-transition
+   (fn [{:keys [started-at id]} app-db]
+     (let [now (ocall js/Date "now")
+           ms-diff (- now started-at)
+           spent-threshold? (< block-route-threshold ms-diff)
+           dataloader-done? (= :loaded (get-in app-db dataloader-status-key))]
+       (if (and dataloader-done? spent-threshold?)
+         (let [new-app-db (if dataloader-done? app-db (assoc-in app-db [:kv :show-loader?] true))]
+           (stop-task new-app-db id))
+         app-db)))))
+
 (def controller
   (pp-controller/constructor
    {:params (fn [params]
               params)
     :start (fn [_ _ app-db]
-             (track-route-transition app-db))}
+             (-> app-db
+                 (assoc-in [:kv :show-loader?] false)
+                 (track-route-transition)
+                 (render-animation-init)))}
    {:on-start (pipeline! [value app-db]
+                (block-route-transition!)
+                (when (get-in app-db [:kv :show-loader?])
+                  (pp/execute! :block-loader-hide nil))
                 (pp/execute! :animate-route-transition value)
                 (pp/execute! :animate-navbar-transition value)
                 (pp/execute! :animate-navbar-marker-transition value))
@@ -79,4 +117,9 @@
                                         (get-in app-db [:kv :route-transition :routes :prev])
                                         (pp/commit! (render-animation-end app-db :navbar-marker/position nil value))
                                         (get-in app-db [:kv :route-transition :routes :current])
-                                        (rna/blocking-animate-state! app-db :navbar-marker/position nil value))}))
+                                        (rna/blocking-animate-state! app-db :navbar-marker/position nil value))
+    :block-loader-hide (pipeline! [value app-db]
+                         (block-loader-hide!)
+                         (pp/commit! (assoc-in app-db [:kv :show-loader?] false)))
+    :on-stop (pipeline! [value app-db]
+               (cancel-task! app-db :block-route-transition))}))

@@ -19,6 +19,10 @@
          {:keys [prev current]} (get-in app-db [:kv :route-transition :routes])] 
      (not (some nil? [prev current])))))
 
+(defn datasource-delay [app-db-atom]
+  (reaction
+   (or (get-in @app-db-atom [:kv :datasource-delay]) 0)))
+
 (def subscriptions
   {:route-transition  (get-kv :route-transition)
    :route-transition? route-transition?
@@ -26,4 +30,6 @@
    :open-story        (get-kv :open-story)
    :vehicles          (get-kv :vehicles)
    :selected-vehicle  (get-kv :selected-vehicle)
-   :button            (get-kv :button)})
+   :button            (get-kv :button)
+   :datasource-delay  datasource-delay
+   :show-loader?      (get-kv :show-loader?)})

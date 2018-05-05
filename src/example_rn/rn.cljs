@@ -38,6 +38,7 @@
 (def button (r/adapt-react-class (oget ReactNative "Button")))
 (def modal (r/adapt-react-class (oget ReactNative "Modal")))
 (def keyboard (oget ReactNative "Keyboard"))
+(def slider (r/adapt-react-class (oget ReactNative "Slider")))
 
 (def data-source (oget ReactNative "ListView.DataSource"))
 (def async-storage (oget ReactNative "AsyncStorage"))

@@ -25,6 +25,8 @@
               :title "Open Button Page"}]
      [button {:on-press #(navigate-go! {:key :complex-stage})
               :title "Open Complex Stage Page"}]
+     [button {:on-press #(navigate-go! {:key :avoid-loader})
+              :title "Open Avoid Loader"}]
      [button {:on-press #(<cmd ctx [:sidebar :open] :left)
               :title "Open Left Sidebar"}]
      [button {:on-press #(<cmd ctx [:sidebar :open] :right)

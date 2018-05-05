@@ -1,14 +1,16 @@
 (ns example-rn.domain.routing)
 
 (def page-transitions
-  {:loader           :loader
-   :init             :slide
-   :about            :slide
-   :stories          :slide
-   :login            :popup
-   :taxi-select-type :popup
-   :button           :popup
-   :complex-stage    :popup})
+  {:loader              :loader
+   :init                :slide
+   :about               :slide
+   :stories             :slide
+   :login               :popup
+   :taxi-select-type    :popup
+   :button              :popup
+   :complex-stage       :popup
+   :avoid-loader        :slide
+   :avoid-loader-target :slide})
 
 (def pages (keys page-transitions))
 
@@ -36,10 +38,10 @@
         going-back?        (> (count (get-in route-data [:prev :routes]))
                               (count (get-in route-data [:current :routes])))]
     (cond
-      (= :loader prev-transition)    :prev-disappear-up
-      (= :popup prev-transition)     :prev-disappear-down
-      (= :loader current-transition) :current-appear-down
-      (= :popup current-transition)  :current-appear-up
-      going-back?                    :prev-disappear-right
-      :else                          :current-appear-left)))
+      (= :loader prev-transition)      :prev-disappear-up
+      (= :popup prev-transition)       :prev-disappear-down
+      (= :loader current-transition)   :current-appear-down
+      (= :popup current-transition)    :current-appear-up
+      going-back?                      :prev-disappear-right
+      :else                            :current-appear-left)))
 
