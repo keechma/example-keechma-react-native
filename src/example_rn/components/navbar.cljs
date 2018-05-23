@@ -13,7 +13,8 @@
 (def page-titles
   {:init    "Home"
    :about   "About"
-   :stories "Stories"})
+   :stories "Stories"
+   :checker "Checker"})
 
 (defn calc-marker-width []
   (let [{:keys [width]} (dimensions)]

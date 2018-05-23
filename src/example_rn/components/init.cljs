@@ -30,7 +30,9 @@
      [button {:on-press #(<cmd ctx [:sidebar :open] :left)
               :title "Open Left Sidebar"}]
      [button {:on-press #(<cmd ctx [:sidebar :open] :right)
-              :title "Open Right Sidebar"}]]))
+              :title "Open Right Sidebar"}]
+     [button {:on-press #(navigate-go! {:key :checker})
+              :title "Checker"}]]))
 
 (def component
   (ui/constructor {:renderer render}))

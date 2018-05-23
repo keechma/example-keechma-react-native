@@ -28,6 +28,7 @@
    :route-transition? route-transition?
    :animation         get-animation
    :open-story        (get-kv :open-story)
+   :open-check        (get-kv :open-check)
    :vehicles          (get-kv :vehicles)
    :selected-vehicle  (get-kv :selected-vehicle)
    :button            (get-kv :button)

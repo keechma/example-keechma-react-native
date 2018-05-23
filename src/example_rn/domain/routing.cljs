@@ -10,12 +10,13 @@
    :button              :popup
    :complex-stage       :popup
    :avoid-loader        :slide
-   :avoid-loader-target :slide})
+   :avoid-loader-target :slide
+   :checker             :slide})
 
 (def pages (keys page-transitions))
 
 (def pages-with-navbar
-  [:init :about :stories])
+  [:init :about :stories :checker])
 
 (defn determine-route [route app-db]
   (let [key (get-in route [:data :key])
