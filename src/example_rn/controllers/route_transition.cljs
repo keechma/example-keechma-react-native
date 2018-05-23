@@ -30,7 +30,7 @@
   {:animation (decide-animation app-db)
    :transition-routes (transition-routes app-db)})
 
-(defn render-animation-init [app-db]
+(defn render-route-transition-init [app-db]
   (render-animation-end app-db :router/init nil (animation-args app-db)))
 
 (defn determine-navbar-state [app-db]
@@ -48,8 +48,9 @@
       (and (not prev-navbar?) (not current-navbar?)) :keep-hidden
       :else                                          nil)))
 
-(def block-route-threshold 1000)
-(def block-loader-threshold 1000)
+(def block-thresholds
+  {:route 800
+   :loader 1000})
 
 (defn block-route-transition! []
   (blocking-raf!
@@ -57,7 +58,7 @@
    (fn [{:keys [started-at id]} app-db]
      (let [now (ocall js/Date "now")
            ms-diff (- now started-at)
-           spent-threshold? (< block-route-threshold ms-diff)
+           spent-threshold? (< (:route block-thresholds) ms-diff)
            dataloader-done? (= :loaded (get-in app-db dataloader-status-key))]
        (if (or dataloader-done? spent-threshold?)
          (let [new-app-db (if dataloader-done? app-db (assoc-in app-db [:kv :show-loader?] true))]
@@ -70,11 +71,10 @@
    (fn [{:keys [started-at id]} app-db]
      (let [now (ocall js/Date "now")
            ms-diff (- now started-at)
-           spent-threshold? (< block-route-threshold ms-diff)
+           spent-threshold? (< (:loader block-thresholds) ms-diff)
            dataloader-done? (= :loaded (get-in app-db dataloader-status-key))]
        (if (and dataloader-done? spent-threshold?)
-         (let [new-app-db (if dataloader-done? app-db (assoc-in app-db [:kv :show-loader?] true))]
-           (stop-task new-app-db id))
+         (stop-task app-db id)
          app-db)))))
 
 (def controller
@@ -85,7 +85,7 @@
              (-> app-db
                  (assoc-in [:kv :show-loader?] false)
                  (track-route-transition)
-                 (render-animation-init)))}
+                 (render-route-transition-init)))}
    {:on-start (pipeline! [value app-db]
                 (block-route-transition!)
                 (when (get-in app-db [:kv :show-loader?])
@@ -96,7 +96,6 @@
     :animate-route-transition (pipeline! [value app-db]
                                 (when (get-in app-db [:kv :route-transition :routes :prev])
                                   (pipeline! [value app-db]
-                                    (pp/commit! (render-animation-init app-db))
                                     (rna/blocking-animate-state! app-db :router/slide nil (animation-args app-db))
                                     (pp/commit! (assoc-in app-db [:kv :route-transition :routes :prev] nil)))))
     :animate-navbar-transition (pipeline! [value app-db]
