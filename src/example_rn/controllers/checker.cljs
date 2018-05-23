@@ -29,11 +29,53 @@
             (measure-component value)
             (pp/commit! (-> app-db
                             (assoc-in [:kv :open-check] value)
-                            (render-animation-end :check/init nil value)))
-        )
+                            (render-animation-end :check-list-header/init nil value)
+                            (render-animation-end :check-list-item-opacity/init nil value)
+                            (render-animation-end :check-list-item-scale/init nil value)
+                            (render-animation-end :check-open-header/init nil value)
+                            (render-animation-end :check-open-background/init nil value)
+                            (render-animation-end :check-open-summary/init nil value)
+                            (render-animation-end :check-open-details/init nil value)
+                            (render-animation-end :check-open-details-items/init nil value)))
+            (rna/blocking-group-animate-state!
+             app-db
+             {:animation :check-list-header/open}
+             {:animation :check-list-item-scale/open}
+             {:animation :check-list-item-opacity/open
+              :delay 100}
+             {:animation :check-open-header/open
+              :delay 200}
+             {:animation :check-open-background/open
+              :delay 300}
+             {:animation :check-open-summary/open
+              :delay 300}
+             {:animation :check-open-details/open
+              :delay 300}
+             {:animation :check-open-details-items/open
+              :delay 350
+              :args value}))
     :close (pipeline! [value app-db]
              (get-in app-db [:kv :open-check])
-          
+
+             (rna/blocking-group-animate-state!
+              app-db
+              {:animation :check-list-header/init
+               :delay 300}
+              {:animation :check-list-item-scale/init
+               :delay 300}
+              {:animation :check-list-item-opacity/init
+               :delay 300}
+              {:animation :check-open-header/init
+               :delay 200}
+              {:animation :check-open-background/init
+               :delay 100}
+              {:animation :check-open-summary/init
+               :args value
+               :delay 100}
+              {:animation :check-open-details/init}
+              {:animation :check-open-details-items/init
+               :args value})
+             
              (pp/commit! (assoc-in app-db [:kv :open-check] nil)))
     :on-stop (pipeline! [value app-db]
                (pp/commit! (assoc-in app-db [:kv :open-check] nil)))}))
