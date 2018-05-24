@@ -25,7 +25,9 @@
         header-animation (:data (sub> ctx :animation :check-open-header))
         background-animation (:data (sub> ctx :animation :check-open-background))
         summary-animation (:data (sub> ctx :animation :check-open-summary))
-        details-animation (:data (sub> ctx :animation :check-open-details))]
+        details-animation (:data (sub> ctx :animation :check-open-details))
+        blue-button-animation (:data (sub> ctx :animation :check-open-buttons :blue))
+        red-button-animation (:data (sub> ctx :animation :check-open-buttons :red))]
     [animated-view {:style {:position "absolute"
                             :width width
                             :height full-height
@@ -62,5 +64,36 @@
                 {:padding 20}
                 details-animation)}
       [open-item-details-summary/render item]
-      [open-item-details/render ctx item-details]
-      [button {:title "< Back" :color "white" :on-press #(<cmd ctx [:checker :close])}]]]))
+      [open-item-details/render ctx item-details]]
+     [view {:style {:position "absolute"
+                    :bottom 40
+                    :justify-content "center"
+                    :align-items "center"
+                    :width width}}
+      [view {:style {:justify-content "space-between"
+                     :flex-direction "row"
+                     :width "33%"}}
+       [animated-view {:style (with-animation-styles
+                                {}
+                                red-button-animation)} 
+        [view {:style {:width 40
+                       :height 40
+                       :border-radius 20
+                       :overflow "hidden"
+                       :justify-content "center"
+                       :align-items "center"
+                       :background-color "#FF2743"}}
+         [text {:style {:color "white"
+                        :font-size 16}} "A"]]]
+       [animated-view {:style (with-animation-styles
+                                {}
+                                blue-button-animation)}
+        [view {:style {:width 40
+                       :height 40
+                       :border-radius 20
+                       :overflow "hidden"
+                       :justify-content "center"
+                       :align-items "center"
+                       :background-color "#0082FF"}}
+         [text {:style {:color "white"
+                        :font-size 16}} "B"]]]]]]))

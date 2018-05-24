@@ -17,6 +17,7 @@
   (let [cell-ref (atom nil)]
     (fn [ctx item open-item-id]
       (let [{:keys [width height]} (dimensions)
+            init-animation (:data (sub> ctx :animation :check-list-item-init (:id item)))
             opacity-animation (:data (sub> ctx :animation :check-list-item-opacity))
             scale-animation (:data (sub> ctx :animation :check-list-item-scale))]
         [view
@@ -26,7 +27,7 @@
          [animated-view
           {:style (with-animation-styles
                     {}
-                    (merge scale-animation opacity-animation))}
+                    (merge init-animation scale-animation opacity-animation))}
           [touchable-opacity
            {:on-press #(<cmd ctx [:checker :open] {:id (:id item) :cell @cell-ref})}
            [summary/render item]]]]))))

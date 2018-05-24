@@ -400,7 +400,6 @@
                (let [runners (map #(run-animation-in-group app-db %) animations)]
                  (->> (p/all (map #(% ctrl app-db-atom value) runners))
                       (p/map (fn [results]
-                               (println "RESULTS")
                                (let [break? (some #(= % :keechma.toolbox.pipeline.core/break) results)]
                                  (if break?
                                    (resolve :keechma.toolbox.pipeline.core/break)

@@ -8,7 +8,7 @@
             [keechma.toolbox.ui :refer [<cmd sub>]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
-            [example-rn.util :refer [with-animation-styles]]
+            [example-rn.util :refer [with-animation-styles index-of]]
             [example-rn.components.checker.open-item :as open-item]
             [example-rn.components.checker.list-item :as list-item]))
 
@@ -23,6 +23,30 @@
    :config {:duration 400
             :easing   {:type   :bezier
                        :values [0.2833 0.99 0.31833 0.99]}}})
+
+(defmethod a/values :check-list-item-init/init [meta _]
+  (let [item (get-in meta [:args :item])
+        items (get-in meta [:args :items])]
+    {:translate-y (- (* (index-of items item) 118))
+     :scale-y 0.8}))
+
+(defmethod a/values :check-list-item-init/open [_ _]
+  {:translate-y 0
+   :scale-y 1})
+(defmethod a/animator :check-list-item-init/open [_ _]
+  (assoc-in animation-config [:config :easing :values] [0.215 0.61 0.355 1]))
+
+(defmethod a/values :check-open-buttons/init [_ _]
+  {:translate-y 100})
+
+(defmethod a/animator :check-open-buttons/init [_ _]
+  (assoc-in animation-config [:config :easing :values] [0.6 -0.28 0.735 0.045]))
+
+(defmethod a/values :check-open-buttons/open [_ _]
+  {:translate-y 0})
+
+(defmethod a/animator :check-open-buttons/open [_ _]
+  (assoc-in animation-config [:config :easing :values] [0.175 0.885 0.32 1.275]))
 
 (defmethod a/values :check-list-item-opacity/init [_ _]
   {:opacity 1})
