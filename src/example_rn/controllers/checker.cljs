@@ -5,7 +5,8 @@
             [oops.core :refer [ocall]]
             [promesa.core :as p]
             [keechma.toolbox.animations.core :refer [render-animation-end]]
-            [example-rn.animations.rn :as rna]))
+            [example-rn.animations.rn :as rna]
+            [example-rn.edb :as edb]))
 
 (defn measure-component [value]
   (p/promise
@@ -27,6 +28,7 @@
        true))
    {:open (pipeline! [value app-db]
             (measure-component value)
+            (assoc value :items (edb/get-collection app-db :check :list))
             (pp/commit! (-> app-db
                             (assoc-in [:kv :open-check] value)
                             (render-animation-end :check-list-header/init nil value)
@@ -49,7 +51,7 @@
              {:animation :check-open-background/open
               :delay 300}
              {:animation :check-open-summary/open
-              :delay 300}
+              :delay 100}
              {:animation :check-open-details/open
               :delay 300}
              {:animation :check-open-details-items/open
@@ -57,6 +59,7 @@
               :args value}))
     :close (pipeline! [value app-db]
              (get-in app-db [:kv :open-check])
+             (assoc value :items (edb/get-collection app-db :check :list))
              (pp/send-command! [:route-transition :animate-navbar-show] nil)
              (rna/blocking-group-animate-state!
               app-db
