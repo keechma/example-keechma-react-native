@@ -103,15 +103,17 @@
                                  (case value
                                    :keep-shown (pp/commit! (render-animation-end app-db :navbar/slide-end nil :show))
                                    :keep-hidden (pp/commit! (render-animation-end app-db :navbar/slide-end nil :hide))
-                                   :show (pipeline! [value app-db]
-                                           (pp/commit! (render-animation-end app-db :navbar/init nil :show))
-                                           (rna/blocking-animate-state! app-db :navbar/slide nil :show)
-                                           (pp/commit! (render-animation-end app-db :navbar/slide-end nil :show)))
-                                   :hide (pipeline! [value app-db]
-                                           (pp/commit! (render-animation-end app-db :navbar/init nil :hide))
-                                           (rna/blocking-animate-state! app-db :navbar/slide nil :hide)
-                                           (pp/commit! (render-animation-end app-db :navbar/slide-end nil :hide)))
+                                   :show (pp/execute! :animate-navbar-show value)
+                                   :hide (pp/execute! :animate-navbar-hide value)
                                    nil))
+    :animate-navbar-hide (pipeline! [value app-db]
+                           (pp/commit! (render-animation-end app-db :navbar/init nil :hide))
+                           (rna/blocking-animate-state! app-db :navbar/slide nil :hide)
+                           (pp/commit! (render-animation-end app-db :navbar/slide-end nil :hide)))
+    :animate-navbar-show (pipeline! [value app-db]
+                           (pp/commit! (render-animation-end app-db :navbar/init nil :show))
+                           (rna/blocking-animate-state! app-db :navbar/slide nil :show)
+                           (pp/commit! (render-animation-end app-db :navbar/slide-end nil :show)))
     :animate-navbar-marker-transition (pipeline! [value app-db]
                                         (get-in app-db [:kv :route-transition :routes :prev])
                                         (pp/commit! (render-animation-end app-db :navbar-marker/position nil value))

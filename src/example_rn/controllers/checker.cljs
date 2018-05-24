@@ -37,6 +37,7 @@
                             (render-animation-end :check-open-summary/init nil value)
                             (render-animation-end :check-open-details/init nil value)
                             (render-animation-end :check-open-details-items/init nil value)))
+            (pp/send-command! [:route-transition :animate-navbar-hide] nil)
             (rna/blocking-group-animate-state!
              app-db
              {:animation :check-list-header/open}
@@ -56,7 +57,7 @@
               :args value}))
     :close (pipeline! [value app-db]
              (get-in app-db [:kv :open-check])
-
+             (pp/send-command! [:route-transition :animate-navbar-show] nil)
              (rna/blocking-group-animate-state!
               app-db
               {:animation :check-list-header/init
@@ -76,6 +77,7 @@
               {:animation :check-open-details-items/init
                :args value})
              
-             (pp/commit! (assoc-in app-db [:kv :open-check] nil)))
+             (pp/commit! (assoc-in app-db [:kv :open-check] nil))
+            )
     :on-stop (pipeline! [value app-db]
                (pp/commit! (assoc-in app-db [:kv :open-check] nil)))}))

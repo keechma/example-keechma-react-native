@@ -1,4 +1,4 @@
-(ns example-rn.components.checker
+(ns example-rn.components.checker.open-item
   (:require [example-rn.rn :refer [view text button flat-list image touchable-opacity animated-view hairline-width]]
             [keechma.ui-component :as ui]
             [example-rn.util.dimensions :refer [dimensions]]
@@ -9,8 +9,8 @@
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
             [example-rn.util :refer [with-animation-styles]]
-            [example-rn.components.checker.open-item :as open-item]
-            [example-rn.components.checker.list-item :as list-item]))
+            [example-rn.components.checker.summary :as summary]
+            [example-rn.components.checker.open-item-details-summary :as open-item-details-summary]))
 
 (def items
   [{:id 1
@@ -186,148 +186,76 @@
                        :amount 1
                        :price 135}]}}])
 
-(defn get-detail-items-for-id [id]
-  (let [item (first (filter #(= (:id %) id) items))]
-    (get-in item [:details :items])))
+(defn render-item-detail-items [ctx item-details]
+  (let [animation (:data (sub> ctx :animation :check-open-details-items))]
+    [view
+     (map
+      (fn [item]
+        (let [style-ns (keyword (str "item-" (:id item)))]
+          [animated-view
+           {:key (:id item)
+            :style (with-animation-styles
+                     {:width "100%"
+                      :padding-vertical 8
+                      :flex-direction "row"
+                      :justify-content "space-between"}
+                     animation
+                     style-ns)}
+           [view {:style {:flex-direction "column"}}
+            [text {:style {:color "#333"
+                           :font-size 14
+                           :margin-bottom 2}} (:title item)]
+            [text {:style {:color "#bbb"
+                           :font-size 12}} (str "$" (:price item) ".00 x" (:amount item) " (Including VAT 10%)")]]
+           [view
+            [text {:style {:color "#333"
+                           :font-size 16}} (str "$" (* (:amount item) (:price item)) ".00")]]])) (:items item-details))]))
 
-(def navbar-height 50)
-
-(def animation-config
-  {:type   :timing
-   :config {:duration 400
-            :easing   {:type   :bezier
-                       :values [0.2833 0.99 0.31833 0.99]}}})
-
-(defmethod a/values :check-list-item-opacity/init [_ _]
-  {:opacity 1})
-(defmethod a/animator :check-list-item-opacity/init [_ _]
-  animation-config)
-
-(defmethod a/values :check-list-item-scale/init [_ _]
-  {:scale 1
-   :translate-y 0})
-(defmethod a/animator :check-list-item-scale/init [_ _]
-  animation-config)
-
-(defmethod a/values :check-list-header/init [_ _]
-  {:opacity 1
-   :translate-y 0})
-(defmethod a/animator :check-list-header/init [_ _]
-  animation-config)
-
-(defmethod a/values :check-open-header/init [_ _]
-  {:height 0})
-(defmethod a/animator :check-open-header/init [_ _]
-  (assoc-in animation-config [:config :useNativeDriver] false))
-
-(defmethod a/values :check-open-background/init [_ _]
-  {:opacity 0})
-(defmethod a/animator :check-open-background/init [_ _]
-  animation-config)
-
-(defmethod a/values :check-open-summary/init [meta _]
-  {:translate-y (get-in meta [:args :cell :page-y])})
-(defmethod a/animator :check-open-summary/init [_ _]
-  animation-config)
-
-(defmethod a/values :check-open-details/init [_ _]
-  {:opacity 0
-   :translate-y 0})
-(defmethod a/animator :check-open-details/init [_ _]
-  animation-config)
-
-(defmethod a/values :check-open-details-items/init [meta _]
-  (let [open-item-id (get-in meta [:args :id])
-        items-ids (mapv :id (get-detail-items-for-id open-item-id))
-        items-count (count items-ids)]
-    (reduce-kv (fn [m k v]
-                 (let [style-ns (str "item-" v)
-                       order (inc k)]
-                   (assoc m
-                          (keyword style-ns "opacity") (- 1 (/ order items-count))
-                          (keyword style-ns "translate-y") (- (* 20 order))))) {} items-ids)))
-
-(defmethod a/animator :check-open-details-items/init [_ _]
-  animation-config)
-
-
-
-
-(defmethod a/values :check-list-item-scale/open [_ _]
-  {:scale 0.95
-   :translate-y 10})
-(defmethod a/animator :check-list-item-scale/open [_ _]
-  animation-config)
-
-(defmethod a/values :check-list-item-opacity/open [_ _]
-  {:opacity 0})
-(defmethod a/animator :check-list-item-opacity/open [_ _]
-  (assoc-in animation-config [:config :duration] 500))
-
-(defmethod a/values :check-list-header/open [_ _]
-  {:opacity 0
-   :translate-y -10})
-(defmethod a/animator :check-list-header/open [_ _]
-  animation-config)
-
-(defmethod a/values :check-open-header/open [_ _]
-  {:height 120})
-(defmethod a/animator :check-open-header/open [_ _]
-  (assoc-in animation-config [:config :useNativeDriver] false))
-
-(defmethod a/values :check-open-background/open [_ _]
-  {:opacity 0})
-(defmethod a/animator :check-open-background/open [_ _]
-  animation-config)
-
-(defmethod a/values :check-open-summary/open [_ _]
-  {:translate-y 65})
-(defmethod a/animator :check-open-summary/open [_ _]
-  animation-config)
-
-(defmethod a/values :check-open-details/open [_ _]
-  {:opacity 1
-   :translate-y 60})
-(defmethod a/animator :check-open-details/open [_ _]
-  animation-config)
-
-(defmethod a/values :check-open-details-items/open [meta _]
-  (let [open-item-id (get-in meta [:args :id])
-        items-ids (mapv :id (get-detail-items-for-id open-item-id))
-        items-count (count items-ids)]
-    (reduce-kv (fn [m k v]
-                 (let [style-ns (str "item-" v)
-                       order (inc k)]
-                   (assoc m
-                          (keyword style-ns "opacity") 1
-                          (keyword style-ns "translate-y") 0))) {} items-ids)))
-(defmethod a/animator :check-open-details-items/open [_ _]
-  animation-config)
-
-
-(defn render [ctx]
-  (let [d (dimensions)
-        open-check (sub> ctx :open-check)
-        animation (:data (sub> ctx :animation :check-list-header))]
-    [view {:style {:flex 1
-                   :background-color "#fff"
-                   :padding-top (:padding-top d)}}
+(defn render [ctx open-item]
+  (let [{:keys [cell id]} open-item
+        {:keys [width height]} cell
+        item (first (filter #(= id (:id %)) items))
+        item-details (:details item)
+        full-height (:height (dimensions))
+        header-animation (:data (sub> ctx :animation :check-open-header))
+        background-animation (:data (sub> ctx :animation :check-open-background))
+        summary-animation (:data (sub> ctx :animation :check-open-summary))
+        details-animation (:data (sub> ctx :animation :check-open-details))]
+    [animated-view {:style {:position "absolute"
+                            :width width
+                            :height full-height
+                            :top 0}} 
      [animated-view
       {:style (with-animation-styles
-                {:padding 12}
-                animation)}
-      [text {:style {:font-weight "700"
-                     :font-size 28}} "My Checks"]]
-     [flat-list
-      {:style {:height "100%"}
-       :data (apply array items)
-       :key-extractor #(str (:id %))
-       :render-item (fn [data]
-                      (r/as-element [list-item/render ctx (oget data "item") (:id open-check)]))}]
-     (when open-check
-       [open-item/render ctx open-check])]))
-
-(def component
-  (ui/constructor {:renderer render
-                   :subscription-deps [:animation
-                                       :open-check]}))
+                {:background-color "white"
+                 :position "absolute"
+                 :height "100%"
+                 :width "100%"
+                 :opacity 0}
+                background-animation)}]
+     [animated-view
+      {:style (with-animation-styles
+                {:position "absolute"
+                 :top 0
+                 :height 100
+                 :background-color "#0082FE"
+                 :width width
+                 :overflow "hidden"}
+                header-animation)}
+      [view {:style {:margin-top 20}}
+       [button {:title "< Back" :color "white" :on-press #(<cmd ctx [:checker :close])}]]]
+     
+     [animated-view
+      {:style (with-animation-styles
+                {:padding-horizontal 12
+                 :z-index 1000
+                 :position "relative"}
+                summary-animation)}
+      [summary/render item]]
+     [animated-view
+      {:style (with-animation-styles
+                {:padding 20}
+                details-animation)}
+      [open-item-details-summary/render item]
+      [render-item-detail-items ctx item-details]
+      [button {:title "< Back" :color "white" :on-press #(<cmd ctx [:checker :close])}]]]))
