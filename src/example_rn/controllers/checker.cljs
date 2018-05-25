@@ -115,6 +115,9 @@
               {:animation :check-open-details/init}
               {:animation :check-open-details-items/init
                :args value})
+             (pp/commit! (-> app-db
+                             (clear-animation :check-list-item-scale)
+                             (clear-animation :check-list-item-opacity)))
              
              (pp/commit! (assoc-in app-db [:kv :open-check] nil))
             )
