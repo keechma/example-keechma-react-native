@@ -83,6 +83,7 @@
              {:animation :check-open-background/open
               :delay 300}
              {:animation :check-open-summary/open
+              :args value
               :delay 100}
              {:animation :check-open-details/open
               :delay 300}

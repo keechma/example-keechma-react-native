@@ -3,7 +3,7 @@
             [keechma.ui-component :as ui]
             [example-rn.util.dimensions :refer [dimensions]]
             [example-rn.util.routing :refer [navigate-go!]]
-            [oops.core :refer [oget]]
+            [oops.core :refer [oget ocall]]
             [reagent.core :as r]
             [keechma.toolbox.ui :refer [<cmd sub>]]
             [keechma.toolbox.animations.core :as a]
@@ -77,8 +77,12 @@
 
 (defmethod a/values :check-open-summary/init [meta _]
   {:translate-y (get-in meta [:args :cell :page-y])})
-(defmethod a/animator :check-open-summary/init [_ _]
-  animation-config)
+
+(defmethod a/animator :check-open-summary/init [meta _]
+  (let [page-y (get-in meta [:args :cell :page-y])]
+    (-> animation-config
+        (assoc-in [:config :duration] (ocall js/Math "max" 300 page-y))
+        (assoc-in [:config :easing :values] [0.23, 1, 0.32, 1]))))
 
 (defmethod a/values :check-open-details/init [_ _]
   {:opacity 0
@@ -133,8 +137,10 @@
 
 (defmethod a/values :check-open-summary/open [_ _]
   {:translate-y 65})
-(defmethod a/animator :check-open-summary/open [_ _]
-  animation-config)
+
+(defmethod a/animator :check-open-summary/open [meta _]
+  (let [page-y (get-in meta [:args :cell :page-y])]
+    (assoc-in animation-config [:config :duration] (ocall js/Math "max" 300 (* 1.3 page-y)))))
 
 (defmethod a/values :check-open-details/open [_ _]
   {:opacity 1
