@@ -1,8 +1,7 @@
 (ns example-rn.components.about
   (:require [example-rn.rn :refer [view text button]]
             [keechma.ui-component :as ui]
-            [example-rn.util.dimensions :refer [dimensions]]
-            [example-rn.util.routing :refer [navigate-go!]]))
+            [example-rn.util.dimensions :refer [dimensions]]))
 
 (defn render [ctx]
   (let [d (dimensions)]
@@ -14,9 +13,9 @@
      [text {:style {:font-size 18}}
       "This is about page!"]
      [text "This is an example of the route based transitions with Keechma"]
-     [button {:on-press #(navigate-go! {:key :init})
+     [button {:on-press #(ui/redirect ctx {:key :init})
               :title "Go to Home Page"}]
-     [button {:on-press #(navigate-go! {:key :login})
+     [button {:on-press #(ui/redirect ctx {:key :login})
               :title "Open Login Popup"}]]))
 
 (def component

@@ -1,7 +1,6 @@
 (ns example-rn.components.router
   (:require [keechma.ui-component :as ui]
-            [keechma.toolbox.ui :refer [sub>]]
-            [example-rn.util.routing :refer [current-route> current-route]]
+            [keechma.toolbox.ui :refer [sub> route>]]
             [reagent.core :as r]
             [example-rn.util :refer [process-transform-styles]]
             [keechma.toolbox.animations.helpers :refer [select-keys-by-namespace]]
@@ -141,7 +140,7 @@
         watch-id            (gensym :transition-watch)]
     (add-watch app-db watch-id
                (fn [key ref _ new-val]
-                 (let [current-page   (:key (current-route (get-in new-val [:route :data])))
+                 (let [current-page   (:key (get-in new-val [:route :data]))
                        rendering-page @rendering-page-atom]
                    (when (or (nil? rendering-page)
                              (= current-page rendering-page))
@@ -159,7 +158,7 @@
   (let [route-transition (sub> ctx :route-transition)
         times-invoked     (:times-invoked route-transition)
         prev-page         (get-in route-transition [:routes :prev])
-        current-page      (:key (current-route> ctx))
+        current-page      (:key (route> ctx))
         animation         (sub> ctx :animation :router)
         animation-data    (:data animation)
         prev-animation    (process-transform-styles (select-keys-by-namespace animation-data :prev))

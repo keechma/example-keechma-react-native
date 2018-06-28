@@ -20,7 +20,8 @@
   (-> {:controllers     controllers
        :components      components
        :subscriptions   subscriptions
-       :router          :react-native
+       :router          :memory
+       :routes          [["" {:key :init}]]
        :route-processor route-processor}
       (dataloader/install datasources edb-schema)
       (forms/install example-rn-forms/forms example-rn-forms/forms-automount-fns)))

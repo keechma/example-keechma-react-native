@@ -8,7 +8,6 @@
             [example-rn.util.dimensions :refer [dimensions]]
             [example-rn.util :refer [index-of]]
             [keechma.toolbox.ui :refer [sub> <cmd]]
-            [example-rn.util.routing :refer [navigate-go!]]
             [example-rn.animations.rn :as rna]
             [keechma.toolbox.animations.helpers :as helpers]
             [example-rn.util :refer [clamp]]))
@@ -104,7 +103,7 @@
                     :width sidebar-width}}
       [button {:on-press #(<cmd ctx [:sidebar :close])
                :title "Close Sidebar"}]
-      [button {:on-press #(navigate-go! {:key :about})
+      [button {:on-press #(ui/redirect ctx {:key :about})
                :title "Go To About Page"}]]
      (into [view {:style {:height "100%"
                           :width width}}] children)

@@ -2,7 +2,6 @@
   (:require [example-rn.rn :refer [view text button flat-list image touchable-opacity animated-view]]
             [keechma.ui-component :as ui]
             [example-rn.util.dimensions :refer [dimensions]]
-            [example-rn.util.routing :refer [navigate-go!]]
             [oops.core :refer [oget]]
             [reagent.core :as r]
             [keechma.toolbox.ui :refer [<cmd sub>]]

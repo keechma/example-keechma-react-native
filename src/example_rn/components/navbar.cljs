@@ -1,7 +1,6 @@
 (ns example-rn.components.navbar
   (:require [keechma.ui-component :as ui]
             [example-rn.rn :refer [view animated-view hairline-width touchable-opacity text]]
-            [example-rn.util.routing :refer [navigate-go!]]
             [example-rn.domain.routing :refer [pages-with-navbar]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
@@ -46,7 +45,7 @@
      (map (fn [p]
             ^{:key p}
             [touchable-opacity
-             {:on-press #(navigate-go! {:key p})
+             {:on-press #(ui/redirect ctx {:key p})
               :style {:height 47
                       :width (str (/ 100 (count pages-with-navbar)) "%")
                       :margin-top 3}}

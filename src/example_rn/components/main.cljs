@@ -3,7 +3,6 @@
             [keechma.toolbox.ui :refer [sub>]]
             [example-rn.rn :refer [view animated-view text]]
             [example-rn.util.dimensions :refer [dimensions]]
-            [example-rn.util.routing :refer [current-route>]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
             [example-rn.util :refer [with-animation-styles]]

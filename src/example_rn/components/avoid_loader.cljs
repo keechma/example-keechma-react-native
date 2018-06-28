@@ -2,7 +2,6 @@
   (:require [example-rn.rn :refer [view text button]]
             [keechma.ui-component :as ui]
             [example-rn.util.dimensions :refer [dimensions]]
-            [example-rn.util.routing :refer [navigate-go!]]
             [example-rn.rn :refer [slider]]
             [keechma.toolbox.ui :refer [<cmd sub>]]
             [example-rn.controllers.kv :refer [<kv-reset]]))
@@ -19,9 +18,9 @@
      [slider {:maximum-value 3000
               :on-value-change #(<kv-reset ctx :datasource-delay %)
               :value datasource-delay}]
-     [button {:on-press #(navigate-go! {:key :avoid-loader-target})
+     [button {:on-press #(ui/redirect ctx {:key :avoid-loader-target})
               :title "Open page with data deps"}]
-     [button {:on-press #(navigate-go! {:key :init})
+     [button {:on-press #(ui/redirect ctx {:key :init})
               :title "Go to Home Page"}]
      ]))
 (def component

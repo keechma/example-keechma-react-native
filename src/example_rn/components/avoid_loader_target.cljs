@@ -2,8 +2,6 @@
   (:require [example-rn.rn :refer [view text button activity-indicator]]
             [keechma.ui-component :as ui]
             [example-rn.util.dimensions :refer [dimensions]]
-            [example-rn.util.routing :refer [navigate-go!]]
-            [keechma.app-state.react-native-router :refer [navigate!]]
             [keechma.toolbox.ui :refer [sub>]]
             ))
 
@@ -22,7 +20,7 @@
         [activity-indicator {:size "large"}]]
        [view
         [text (sub> ctx :some-datasource)]
-        [button {:on-press #(navigate! :pop)
+        [button {:on-press #(ui/redirect ctx nil :back)
                  :title "Go Back"}]])
      
      ]))

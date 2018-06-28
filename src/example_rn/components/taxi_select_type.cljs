@@ -2,7 +2,6 @@
   (:require [example-rn.rn :refer [animated-view view text button image touchable-opacity]]
             [keechma.ui-component :as ui]
             [example-rn.util.dimensions :refer [dimensions]]
-            [example-rn.util.routing :refer [navigate-go!]]
             [keechma.toolbox.ui :refer [sub> <cmd]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
@@ -314,7 +313,7 @@
           animation-data
           :confirm)}
        [touchable-opacity
-        {:on-press #(navigate-go! {:key :init})}
+        {:on-press #(ui/redirect ctx {:key :init})}
         [view {:style {:background-color "#222"
                        :padding 15
                        :width "100%"}}

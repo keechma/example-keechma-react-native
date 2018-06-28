@@ -18,16 +18,12 @@
 (def pages-with-navbar
   [:init :about :stories :checker])
 
-(defn determine-route [route app-db]
-  (let [key (get-in route [:data :key])
-        index (get-in route [:data :index])]
-    route))
-
 (defn route-processor [route app-db]
   (let [initialized? (get-in app-db [:kv :initialized?])]
     (if initialized?
-      (determine-route route app-db)
-      {:data {:index 0 :key :loader :routes [{:key :loader}]}})))
+      route
+      {:data {:key :loader}
+       :stack [{:key :loader}]})))
 
 (defn decide-animation [app-db]
   (let [route-transition   (get-in app-db [:kv :route-transition])

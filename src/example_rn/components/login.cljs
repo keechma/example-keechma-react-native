@@ -1,8 +1,7 @@
 (ns example-rn.components.login
   (:require [example-rn.rn :refer [view text button]]
             [keechma.ui-component :as ui]
-            [example-rn.util.dimensions :refer [dimensions]]
-            [keechma.app-state.react-native-router :refer [navigate!]]))
+            [example-rn.util.dimensions :refer [dimensions]]))
 
 (defn render [ctx]
   (let [d (dimensions)]
@@ -14,7 +13,7 @@
      [text {:style {:font-size 18}}
       "This is a login page!"]
      [text "It opens like a popup"]
-     [button {:on-press #(navigate! :pop)
+     [button {:on-press #(ui/redirect ctx nil :back)
               :title "Close popup"
               :color "yellow"}]]))
 

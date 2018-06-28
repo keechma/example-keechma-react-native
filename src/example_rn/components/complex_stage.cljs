@@ -10,7 +10,6 @@
                                    image
                                    switch]]
             [example-rn.util.dimensions :refer [dimensions]]
-            [keechma.app-state.react-native-router :refer [navigate!]]
             [keechma.toolbox.animations.core :as a]
             [keechma.toolbox.animations.animator :as animator]
             [example-rn.util :refer [with-animation-styles process-transform-styles]]
@@ -88,7 +87,7 @@
                   :width (:width d)
                   :height 100}
                  main-anim)}]]
-     [button {:on-press #(navigate! :pop)
+     [button {:on-press #(ui/redirect ctx nil :back)
               :title "Close popup"
               :color "blue"}]]))
 

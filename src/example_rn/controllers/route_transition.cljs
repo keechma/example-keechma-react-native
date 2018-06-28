@@ -1,7 +1,6 @@
 (ns example-rn.controllers.route-transition
   (:require [keechma.toolbox.pipeline.core :as pp :refer-macros [pipeline!]]
             [keechma.toolbox.pipeline.controller :as pp-controller]
-            [example-rn.util.routing :as routing]
             [example-rn.domain.routing :refer [decide-animation pages-with-navbar]]
             [keechma.toolbox.animations.core :refer [render-animation-end]]
             [example-rn.animations.rn :as rna]
@@ -10,8 +9,7 @@
             [keechma.toolbox.dataloader.controller :refer [dataloader-status-key]]))
 
 (defn track-route-transition [app-db]
-  (let [route-data       (get-in app-db [:route :data])
-        route            (routing/current-route route-data)
+  (let [route            (get-in app-db [:route :data])
         route-key        (:key route)
         route-transition (get-in app-db [:kv :route-transition])]
     (if (not= route-key (:current route-transition))
@@ -19,7 +17,7 @@
                 {:routes        {:prev    (get-in route-transition [:routes :current])
                                  :current route-key}
                  :route-data    {:prev    (get-in route-transition [:route-data :current])
-                                 :current route-data}
+                                 :current route}
                  :times-invoked (inc (or (:times-invoked route-transition) -1))})
       app-db)))
 
