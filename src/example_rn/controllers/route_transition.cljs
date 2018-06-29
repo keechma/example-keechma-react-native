@@ -18,6 +18,8 @@
                                  :current route-key}
                  :route-data    {:prev    (get-in route-transition [:route-data :current])
                                  :current route}
+                 :route-stack   {:prev    (get-in route-transition [:route-stack :current])
+                                 :current (get-in app-db [:route :stack])}
                  :times-invoked (inc (or (:times-invoked route-transition) -1))})
       app-db)))
 

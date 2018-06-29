@@ -28,12 +28,13 @@
 (defn decide-animation [app-db]
   (let [route-transition   (get-in app-db [:kv :route-transition])
         route-data         (:route-data route-transition)
+        route-stack        (:route-stack route-transition)
         prev               (get-in route-transition [:routes :prev])
         current            (get-in route-transition [:routes :current])
         prev-transition    (get page-transitions prev)
         current-transition (get page-transitions current)
-        going-back?        (> (count (get-in route-data [:prev :routes]))
-                              (count (get-in route-data [:current :routes])))]
+        going-back?        (> (count (:prev route-stack))
+                              (count (:current route-stack)))]
     (cond
       (= :loader prev-transition)      :prev-disappear-up
       (= :popup prev-transition)       :prev-disappear-down

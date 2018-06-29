@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.312"]
                  [reagent "0.7.0" :exclusions [cljsjs/react cljsjs/react-dom cljsjs/react-dom-server cljsjs/create-react-class]]
-                 [keechma "0.3.8" :exclusions [cljsjs/react-with-addons cljsjs/react-dom cljsjs/react-dom-server]]
+                 [keechma "0.3.9" :exclusions [cljsjs/react-with-addons cljsjs/react-dom cljsjs/react-dom-server]]
                  [keechma/toolbox "0.1.17" :exclusions [cljsjs/react-with-addons cljsjs/react-dom cljsjs/react-dom-server]]
                  [binaryage/oops "0.6.1"]
                  [camel-snake-kebab "0.4.0"]]
